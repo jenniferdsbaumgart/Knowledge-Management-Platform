@@ -1,0 +1,24 @@
+{
+    "name": "@knowledge-platform/connectors",
+    "version": "0.1.0",
+    "private": true,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@knowledge-platform/shared": "workspace:*",
+        "axios": "^1.6.2",
+        "cheerio": "^1.0.0-rc.12",
+        "mammoth": "^1.6.0",
+        "pdf-parse": "^1.1.1",
+        "xlsx": "^0.18.5"
+    },
+    "devDependencies": {
+        "@types/pdf-parse": "^1.1.4",
+        "typescript": "^5.3.3"
+    }
+}
