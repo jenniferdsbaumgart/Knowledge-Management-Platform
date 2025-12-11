@@ -1,0 +1,23 @@
+{
+  "name": "knowledge-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Knowledge Management Platform with RAG-powered semantic search",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
+    "docker:up": "docker-compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f docker/docker-compose.yml down",
+    "db:migrate": "pnpm --filter api run db:migrate",
+    "db:generate": "pnpm --filter api run db:generate"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
