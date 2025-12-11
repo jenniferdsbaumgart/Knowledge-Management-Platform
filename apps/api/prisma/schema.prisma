@@ -1,0 +1,206 @@
+// Prisma schema for Knowledge Management Platform
+// Includes pgvector extension for semantic search
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector, uuid_ossp(map: "uuid-ossp")]
+}
+
+// ==================== AUTH ====================
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  password     String
+  name         String
+  role         UserRole  @default(VIEWER)
+  refreshToken String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  contents        Content[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@map("users")
+}
+
+// ==================== SOURCES ====================
+
+enum SourceType {
+  API
+  DATABASE
+  DOCUMENT
+  WEB
+}
+
+enum SyncStatus {
+  IDLE
+  SYNCING
+  SUCCESS
+  FAILED
+}
+
+model Source {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String
+  description  String?
+  type         SourceType
+  config       Json
+  status       SyncStatus @default(IDLE)
+  lastSyncAt   DateTime?  @map("last_sync_at")
+  syncSchedule String?    @map("sync_schedule")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  documents Document[]
+  syncLogs  SyncLog[]
+
+  @@map("sources")
+}
+
+// ==================== DOCUMENTS ====================
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  INDEXED
+  FAILED
+}
+
+model Document {
+  id         String         @id @default(uuid()) @db.Uuid
+  sourceId   String         @map("source_id") @db.Uuid
+  externalId String?        @map("external_id")
+  title      String
+  content    String
+  metadata   Json           @default("{}")
+  status     DocumentStatus @default(PENDING)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  source Source  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  chunks Chunk[]
+
+  @@unique([sourceId, externalId])
+  @@map("documents")
+}
+
+model Chunk {
+  id         String                       @id @default(uuid()) @db.Uuid
+  documentId String                       @map("document_id") @db.Uuid
+  content    String
+  embedding  Unsupported("vector(1536)")?
+  metadata   Json                         @default("{}")
+  createdAt  DateTime                     @default(now()) @map("created_at")
+
+  // Relations
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("chunks")
+}
+
+// ==================== CMS ====================
+
+enum ContentStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+model Content {
+  id          String        @id @default(uuid()) @db.Uuid
+  title       String
+  slug        String        @unique
+  body        String
+  status      ContentStatus @default(DRAFT)
+  authorId    String        @map("author_id") @db.Uuid
+  publishedAt DateTime?     @map("published_at")
+  version     Int           @default(1)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  author   User             @relation(fields: [authorId], references: [id])
+  versions ContentVersion[]
+
+  @@map("contents")
+}
+
+model ContentVersion {
+  id        String   @id @default(uuid()) @db.Uuid
+  contentId String   @map("content_id") @db.Uuid
+  title     String
+  body      String
+  version   Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("content_versions")
+}
+
+// ==================== SYNC ====================
+
+enum SyncLogStatus {
+  STARTED
+  COMPLETED
+  FAILED
+}
+
+model SyncLog {
+  id              String        @id @default(uuid()) @db.Uuid
+  sourceId        String        @map("source_id") @db.Uuid
+  status          SyncLogStatus
+  documentsCount  Int?          @map("documents_count")
+  chunksCount     Int?          @map("chunks_count")
+  errorMessage    String?       @map("error_message")
+  startedAt       DateTime      @default(now()) @map("started_at")
+  completedAt     DateTime?     @map("completed_at")
+
+  // Relations
+  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@map("sync_logs")
+}
+
+// ==================== ANALYTICS ====================
+
+enum AnalyticsEventType {
+  SEARCH
+  RAG_QUERY
+  DOCUMENT_VIEW
+  FEEDBACK
+  SYNC_STARTED
+  SYNC_COMPLETED
+}
+
+model AnalyticsEvent {
+  id        String             @id @default(uuid()) @db.Uuid
+  type      AnalyticsEventType
+  userId    String?            @map("user_id") @db.Uuid
+  metadata  Json               @default("{}")
+  timestamp DateTime           @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([type, timestamp])
+  @@map("analytics_events")
+}
