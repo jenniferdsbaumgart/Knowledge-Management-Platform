@@ -1,0 +1,19 @@
+{
+    "name": "@knowledge-platform/rag",
+    "version": "0.1.0",
+    "private": true,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@knowledge-platform/shared": "workspace:*",
+        "openai": "^4.24.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.3.3"
+    }
+}
