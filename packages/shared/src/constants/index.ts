@@ -121,7 +121,7 @@ export const QUEUE_NAMES = {
 
 // Content Status Workflow
 export const CONTENT_STATUS_TRANSITIONS = {
-    DRAFT: ['REVIEW', 'ARCHIVED'],
+    DRAFT: ['REVIEW', 'PUBLISHED', 'ARCHIVED'],
     REVIEW: ['DRAFT', 'PUBLISHED', 'ARCHIVED'],
     PUBLISHED: ['DRAFT', 'ARCHIVED'],
     ARCHIVED: ['DRAFT'],
