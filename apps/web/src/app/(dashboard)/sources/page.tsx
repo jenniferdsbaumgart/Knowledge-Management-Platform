@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sourcesApi, syncApi } from "@/lib/api";
-import { Plus, RefreshCw, Trash2, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { sourcesApi, syncApi, uploadApi } from "@/lib/api";
+import { Plus, RefreshCw, Trash2, CheckCircle, XCircle, Loader2, Upload, FileText, X } from "lucide-react";
 
 export default function SourcesPage() {
     const queryClient = useQueryClient();
@@ -137,21 +137,64 @@ function AddSourceForm({ onClose }: { onClose: () => void }) {
     const [name, setName] = useState("");
     const [type, setType] = useState("API");
     const [url, setUrl] = useState("");
+    const [files, setFiles] = useState<File[]>([]);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const mutation = useMutation({
-        mutationFn: (data: any) => sourcesApi.create(data),
-        onSuccess: () => {
+    const createMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const response = await sourcesApi.create(data);
+            return response.data;
+        },
+        onSuccess: async (source) => {
+            if (type === "DOCUMENT" && files.length > 0) {
+                try {
+                    await uploadApi.upload(source.id, files, setUploadProgress);
+                } catch (error) {
+                    console.error("Upload failed:", error);
+                }
+            }
             queryClient.invalidateQueries({ queryKey: ["sources"] });
             onClose();
         },
     });
 
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    }, []);
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        setFiles((prev) => [...prev, ...droppedFiles]);
+    }, []);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    const removeFile = (index: number) => {
+        setFiles((prev) => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        mutation.mutate({
+        createMutation.mutate({
             name,
             type,
-            config: { type, url, method: "GET" },
+            config: type === "DOCUMENT"
+                ? { type, fileCount: files.length }
+                : { type, url, method: "GET" },
         });
     };
 
@@ -168,7 +211,7 @@ function AddSourceForm({ onClose }: { onClose: () => void }) {
                             <Input
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="My API Source"
+                                placeholder="My Source"
                                 required
                             />
                         </div>
@@ -180,23 +223,104 @@ function AddSourceForm({ onClose }: { onClose: () => void }) {
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             >
                                 <option value="API">API</option>
-                                <option value="DOCUMENT">Document</option>
+                                <option value="DOCUMENT">Document Upload</option>
                                 <option value="WEB">Web Scraper</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="text-sm font-medium">URL / Path</label>
-                            <Input
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                                placeholder="https://api.example.com"
-                                required
-                            />
-                        </div>
+                        {type !== "DOCUMENT" && (
+                            <div>
+                                <label className="text-sm font-medium">URL</label>
+                                <Input
+                                    value={url}
+                                    onChange={(e) => setUrl(e.target.value)}
+                                    placeholder="https://api.example.com"
+                                    required={type !== "DOCUMENT"}
+                                />
+                            </div>
+                        )}
                     </div>
+
+                    {type === "DOCUMENT" && (
+                        <div className="space-y-3">
+                            <div
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragging
+                                        ? "border-primary bg-primary/5"
+                                        : "border-muted-foreground/25 hover:border-primary/50"
+                                    }`}
+                            >
+                                <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+                                <p className="text-sm text-muted-foreground">
+                                    Drag & drop files here, or click to select
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    PDF, Word, Excel, Text, Markdown, JSON
+                                </p>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.md,.json,.csv"
+                                    onChange={handleFileSelect}
+                                    className="hidden"
+                                />
+                            </div>
+
+                            {files.length > 0 && (
+                                <div className="space-y-2">
+                                    <p className="text-sm font-medium">Selected Files ({files.length})</p>
+                                    <div className="max-h-40 overflow-auto space-y-1">
+                                        {files.map((file, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center justify-between p-2 bg-muted rounded text-sm"
+                                            >
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <FileText className="w-4 h-4 text-muted-foreground" />
+                                                    <span className="truncate">{file.name}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        ({(file.size / 1024).toFixed(1)} KB)
+                                                    </span>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => removeFile(index)}
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {uploadProgress > 0 && uploadProgress < 100 && (
+                                <div className="space-y-1">
+                                    <div className="w-full bg-muted rounded-full h-2">
+                                        <div
+                                            className="bg-primary h-2 rounded-full transition-all"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground text-center">
+                                        Uploading... {uploadProgress}%
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div className="flex gap-2">
-                        <Button type="submit" disabled={mutation.isPending}>
-                            {mutation.isPending ? "Creating..." : "Create Source"}
+                        <Button
+                            type="submit"
+                            disabled={createMutation.isPending || (type === "DOCUMENT" && files.length === 0)}
+                        >
+                            {createMutation.isPending ? "Creating..." : "Create Source"}
                         </Button>
                         <Button type="button" variant="outline" onClick={onClose}>
                             Cancel
@@ -207,3 +331,4 @@ function AddSourceForm({ onClose }: { onClose: () => void }) {
         </Card>
     );
 }
+

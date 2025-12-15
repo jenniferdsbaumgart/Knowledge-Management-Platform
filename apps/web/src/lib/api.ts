@@ -96,3 +96,22 @@ export const cmsApi = {
     publish: (id: string) => api.post(`/cms/${id}/publish`),
     unpublish: (id: string) => api.post(`/cms/${id}/unpublish`),
 };
+
+// Upload API
+export const uploadApi = {
+    upload: (sourceId: string, files: File[], onProgress?: (percent: number) => void) => {
+        const formData = new FormData();
+        files.forEach((file) => formData.append('files', file));
+        return api.post(`/upload/${sourceId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (progressEvent) => {
+                if (onProgress && progressEvent.total) {
+                    const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    onProgress(percent);
+                }
+            },
+        });
+    },
+    list: (sourceId: string) => api.get(`/upload/${sourceId}`),
+    delete: (sourceId: string, fileName: string) => api.delete(`/upload/${sourceId}/${fileName}`),
+};
