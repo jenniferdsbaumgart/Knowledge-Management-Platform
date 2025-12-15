@@ -21,6 +21,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 
 const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Chat", href: "/chat", icon: Search },
     { name: "Sources", href: "/sources", icon: Database },
     { name: "Content", href: "/content", icon: FileText },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },

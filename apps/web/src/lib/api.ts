@@ -65,8 +65,12 @@ export const knowledgeApi = {
 export const searchApi = {
     search: (query: string, options?: { mode?: string; limit?: number }) =>
         api.post('/search', { query, ...options }),
-    rag: (query: string, options?: { maxTokens?: number; temperature?: number }) =>
-        api.post('/search/rag', { query, ...options }),
+    rag: (data: {
+        query: string;
+        conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+        maxTokens?: number;
+        temperature?: number
+    }) => api.post('/search/rag', data),
 };
 
 // Sync API
