@@ -1,5 +1,5 @@
 import { SEARCH } from '@knowledge-platform/shared';
-import type { SearchResult, SearchFilters } from '@knowledge-platform/shared';
+import type { SearchFilters } from '@knowledge-platform/shared';
 import { EmbeddingService } from '../embeddings/index.js';
 
 export interface RetrievalResult {
