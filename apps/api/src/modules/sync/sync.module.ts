@@ -5,10 +5,12 @@ import { SyncController } from './sync.controller';
 import { SyncService } from './sync.service';
 import { SyncProcessor } from './sync.processor';
 import { QUEUE_NAMES } from '@knowledge-platform/shared';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
     imports: [
         ConfigModule,
+        UploadModule,
         BullModule.registerQueue(
             { name: QUEUE_NAMES.SYNC },
             { name: QUEUE_NAMES.EMBEDDING },
@@ -19,3 +21,4 @@ import { QUEUE_NAMES } from '@knowledge-platform/shared';
     exports: [SyncService],
 })
 export class SyncModule { }
+

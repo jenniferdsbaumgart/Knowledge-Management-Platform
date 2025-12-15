@@ -8,6 +8,7 @@ import { databaseConfig } from './config/database.config';
 import { redisConfig } from './config/redis.config';
 import { jwtConfig } from './config/jwt.config';
 import { openaiConfig } from './config/openai.config';
+import { minioConfig } from './config/minio.config';
 
 // Modules
 import { PrismaModule } from './common/prisma/prisma.module';
@@ -19,13 +20,14 @@ import { SyncModule } from './modules/sync/sync.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { CmsModule } from './modules/cms/cms.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
     imports: [
         // Configuration
         ConfigModule.forRoot({
             isGlobal: true,
-            load: [databaseConfig, redisConfig, jwtConfig, openaiConfig],
+            load: [databaseConfig, redisConfig, jwtConfig, openaiConfig, minioConfig],
         }),
 
         // Rate limiting
@@ -54,6 +56,8 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
         AnalyticsModule,
         CmsModule,
         WebhooksModule,
+        UploadModule,
     ],
 })
 export class AppModule { }
+
