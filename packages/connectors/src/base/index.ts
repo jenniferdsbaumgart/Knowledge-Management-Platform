@@ -1,4 +1,4 @@
-import type { Source, SourceConfig, Document } from '@knowledge-platform/shared';
+import type { Source, SourceConfig } from '@knowledge-platform/shared';
 
 /**
  * Result from fetching data from a source

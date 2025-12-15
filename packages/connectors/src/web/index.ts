@@ -62,7 +62,7 @@ export class WebConnector extends BaseConnector<WebSourceConfig> {
         };
     }
 
-    async fetchIncremental(since: Date): Promise<FetchResult> {
+    async fetchIncremental(_since: Date): Promise<FetchResult> {
         // Web scraping typically doesn't support incremental fetches
         // We re-crawl everything
         return this.fetchAll();
