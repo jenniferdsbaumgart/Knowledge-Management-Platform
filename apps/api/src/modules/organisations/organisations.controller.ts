@@ -107,7 +107,7 @@ export class OrganisationsController {
 
         // Update current user's organisation (for super admin context switching)
         await this.prisma.user.update({
-            where: { id: req.user.sub },
+            where: { id: req.user.id },
             data: { organisationId: dto.organisationId },
         });
 
