@@ -27,7 +27,7 @@ export class SearchService {
         this.embeddingService = new EmbeddingService(apiKey!, model);
     }
 
-    async search(dto: SearchQueryDto) {
+    async search(dto: SearchQueryDto, organisationId?: string) {
         const startTime = Date.now();
         const { query, limit = 10, offset = 0, sourceIds } = dto;
         let { mode = 'hybrid' } = dto;
@@ -44,14 +44,14 @@ export class SearchService {
 
         switch (mode) {
             case 'semantic':
-                results = await this.semanticSearch(query, limit, sourceIds);
+                results = await this.semanticSearch(query, limit, sourceIds, organisationId);
                 break;
             case 'keyword':
-                results = await this.keywordSearch(query, limit, sourceIds);
+                results = await this.keywordSearch(query, limit, sourceIds, organisationId);
                 break;
             case 'hybrid':
             default:
-                results = await this.hybridSearch(query, limit, sourceIds);
+                results = await this.hybridSearch(query, limit, sourceIds, organisationId);
         }
 
         return {
@@ -66,12 +66,20 @@ export class SearchService {
         query: string,
         limit: number,
         sourceIds?: string[],
+        organisationId?: string,
     ): Promise<SearchResultItem[]> {
         const { embedding } = await this.embeddingService.embed(query);
 
-        let results = await this.prisma.vectorSearch(embedding, limit * 2) as SearchResultItem[];
+        // Filter provided sourceIds to org sourceIds if needed?
+        // Right now vectorSearch filters by org via JOIN, so even if user passes other org sourceId, 
+        // they won't match "AND s.organisation_id = ...". This is secure.
+
+        // Pass orgId to prisma
+        let results = await this.prisma.vectorSearch(embedding, limit * 2, organisationId) as SearchResultItem[];
 
         if (sourceIds?.length) {
+            // Client-side set intersection if user wants specific subset of their own sources
+            // (We still filter returned results)
             const documents = await this.prisma.document.findMany({
                 where: { sourceId: { in: sourceIds } },
                 select: { id: true },
@@ -87,8 +95,9 @@ export class SearchService {
         query: string,
         limit: number,
         sourceIds?: string[],
+        organisationId?: string,
     ): Promise<SearchResultItem[]> {
-        let results = await this.prisma.keywordSearch(query, limit * 2) as SearchResultItem[];
+        let results = await this.prisma.keywordSearch(query, limit * 2, organisationId) as SearchResultItem[];
 
         if (sourceIds?.length) {
             const documents = await this.prisma.document.findMany({
@@ -106,10 +115,11 @@ export class SearchService {
         query: string,
         limit: number,
         sourceIds?: string[],
+        organisationId?: string,
     ): Promise<SearchResultItem[]> {
         const [semanticResults, keywordResults] = await Promise.all([
-            this.semanticSearch(query, limit * 2, sourceIds),
-            this.keywordSearch(query, limit * 2, sourceIds),
+            this.semanticSearch(query, limit * 2, sourceIds, organisationId),
+            this.keywordSearch(query, limit * 2, sourceIds, organisationId),
         ]);
 
         // Combine with weighted scoring

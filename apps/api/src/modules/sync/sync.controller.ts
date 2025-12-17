@@ -1,14 +1,14 @@
-import { Controller, Post, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SyncService } from './sync.service';
 import { Roles } from '../../common/decorators';
-import { RolesGuard } from '../../common/guards';
+import { RolesGuard, OrganisationGuard } from '../../common/guards';
 import { UserRole } from '@prisma/client';
 
 @ApiTags('Sync')
 @Controller('sync')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(AuthGuard('jwt'), RolesGuard, OrganisationGuard)
 @ApiBearerAuth()
 export class SyncController {
     constructor(private syncService: SyncService) { }
@@ -16,14 +16,14 @@ export class SyncController {
     @Post(':sourceId')
     @Roles(UserRole.ADMIN, UserRole.EDITOR)
     @ApiOperation({ summary: 'Trigger sync for a source' })
-    async triggerSync(@Param('sourceId') sourceId: string) {
-        return this.syncService.triggerSync(sourceId);
+    async triggerSync(@Param('sourceId') sourceId: string, @Request() req: any) {
+        return this.syncService.triggerSyncSecure(sourceId, req.organisationId);
     }
 
     @Get(':sourceId/status')
     @ApiOperation({ summary: 'Get sync status for a source' })
-    async getSyncStatus(@Param('sourceId') sourceId: string) {
-        return this.syncService.getSyncStatus(sourceId);
+    async getSyncStatus(@Param('sourceId') sourceId: string, @Request() req: any) {
+        return this.syncService.getSyncStatus(sourceId, req.organisationId);
     }
 
     @Get('logs')
@@ -32,14 +32,15 @@ export class SyncController {
         @Query('page') page?: number,
         @Query('limit') limit?: number,
         @Query('sourceId') sourceId?: string,
+        @Request() req?: any,
     ) {
-        return this.syncService.getSyncLogs({ page, limit, sourceId });
+        return this.syncService.getSyncLogs({ page, limit, sourceId }, req.organisationId);
     }
 
     @Post(':sourceId/cancel')
     @Roles(UserRole.ADMIN)
     @ApiOperation({ summary: 'Cancel running sync' })
-    async cancelSync(@Param('sourceId') sourceId: string) {
-        return this.syncService.cancelSync(sourceId);
+    async cancelSync(@Param('sourceId') sourceId: string, @Request() req: any) {
+        return this.syncService.cancelSync(sourceId, req.organisationId);
     }
 }

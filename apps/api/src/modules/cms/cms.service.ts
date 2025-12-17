@@ -3,13 +3,6 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ContentStatus } from '@prisma/client';
 import { CONTENT_STATUS_TRANSITIONS } from '@knowledge-platform/shared';
 
-interface CreateContentDto {
-    title: string;
-    slug: string;
-    body: string;
-    status?: ContentStatus;
-}
-
 interface UpdateContentDto {
     title?: string;
     body?: string;
@@ -20,29 +13,28 @@ interface UpdateContentDto {
 export class CmsService {
     constructor(private prisma: PrismaService) { }
 
-    async findAll(query: { page?: number | string; limit?: number | string; status?: ContentStatus }) {
+    async findAll(query: { page?: number; limit?: number; status?: ContentStatus }, organisationId?: string) {
         const page = Number(query.page) || 1;
-        const limit = Number(query.limit) || 20;
+        const limit = Number(query.limit) || 10;
         const skip = (page - 1) * limit;
-        const status = query.status;
 
-        const where = status ? { status } : {};
+        const where: any = {};
+        if (organisationId) where.organisationId = organisationId;
+        if (query.status) where.status = query.status;
 
-        const [contents, total] = await Promise.all([
+        const [items, total] = await Promise.all([
             this.prisma.content.findMany({
                 where,
                 skip,
                 take: limit,
-                orderBy: { updatedAt: 'desc' },
-                include: {
-                    author: { select: { id: true, name: true, email: true } },
-                },
+                orderBy: { createdAt: 'desc' },
+                include: { author: { select: { id: true, name: true } } },
             }),
             this.prisma.content.count({ where }),
         ]);
 
         return {
-            items: contents,
+            items: items,
             total,
             page,
             limit,
@@ -84,16 +76,11 @@ export class CmsService {
         return content;
     }
 
-    async create(authorId: string, organisationId: string, dto: CreateContentDto) {
-        // Check for duplicate slug
-        const existing = await this.prisma.content.findUnique({
-            where: { slug: dto.slug },
-        });
-
-        if (existing) {
-            throw new BadRequestException(`Content with slug ${dto.slug} already exists`);
-        }
-
+    async create(
+        authorId: string,
+        organisationId: string,
+        dto: { title: string; slug: string; body: string; status?: ContentStatus },
+    ) {
         return this.prisma.content.create({
             data: {
                 title: dto.title,

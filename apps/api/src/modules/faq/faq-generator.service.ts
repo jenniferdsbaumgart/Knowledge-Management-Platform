@@ -24,20 +24,27 @@ export class FaqGeneratorService {
         console.log('[FaqGenerator] USE_OPENROUTER env value:', process.env.USE_OPENROUTER);
         this.useOpenRouter = process.env.USE_OPENROUTER === 'true';
 
+        let apiKey = this.configService.get<string>('openai.apiKey') || process.env.OPENAI_API_KEY;
+        let baseURL = this.configService.get<string>('openai.baseURL') || process.env.OPENAI_BASE_URL;
+
         if (this.useOpenRouter) {
-            const openRouterKey = process.env.OPENROUTER_API_KEY;
-            this.client = new OpenAI({
-                apiKey: openRouterKey,
-                baseURL: 'https://openrouter.ai/api/v1',
-            });
+            apiKey = process.env.OPENROUTER_API_KEY || apiKey;
+            baseURL = 'https://openrouter.ai/api/v1';
             this.model = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free';
             console.log('[FaqGenerator] Using OpenRouter with model:', this.model);
         } else {
-            const apiKey = this.configService.get<string>('openai.apiKey');
-            this.client = new OpenAI({ apiKey });
             this.model = this.configService.get<string>('openai.chatModel') || 'gpt-4';
             console.log('[FaqGenerator] Using OpenAI with model:', this.model);
         }
+
+        if (!apiKey) {
+            console.warn('[FaqGenerator] Warning: No API Key configured');
+        }
+
+        this.client = new OpenAI({
+            apiKey,
+            baseURL: baseURL || undefined,
+        });
     }
 
     async generateFromSource(sourceId: string, organisationId: string, maxPerDocument: number = 5): Promise<number> {

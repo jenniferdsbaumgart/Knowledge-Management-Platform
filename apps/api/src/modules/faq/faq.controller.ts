@@ -15,7 +15,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { FaqService } from './faq.service';
 import { FaqGeneratorService } from './faq-generator.service';
 import { Roles } from '../../common/decorators';
-import { RolesGuard } from '../../common/guards';
+import { RolesGuard, OrganisationGuard } from '../../common/guards';
 import { UserRole } from '@prisma/client';
 import {
     CreateFaqEntryDto,
@@ -28,6 +28,7 @@ import {
 
 @ApiTags('FAQ')
 @Controller('faq')
+@UseGuards(AuthGuard('jwt'), RolesGuard, OrganisationGuard)
 export class FaqController {
     constructor(
         private faqService: FaqService,
@@ -41,7 +42,7 @@ export class FaqController {
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Get all FAQ entries (admin)' })
     async findAll(@Query() query: FaqQueryDto, @Request() req: any) {
-        return this.faqService.findAll(query, req.user.organisationId);
+        return this.faqService.findAll(query, req.organisationId);
     }
 
     @Get('categories')
@@ -66,7 +67,7 @@ export class FaqController {
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Create FAQ entry manually' })
     async create(@Body() dto: CreateFaqEntryDto, @Request() req: any) {
-        return this.faqService.create(dto, req.user.organisationId);
+        return this.faqService.create(dto, req.organisationId);
     }
 
     @Put(':id')
@@ -131,7 +132,7 @@ export class FaqController {
     async generate(@Body() dto: GenerateFaqDto, @Request() req: any) {
         const count = await this.faqGeneratorService.generateFromSource(
             dto.sourceId,
-            req.user.organisationId,
+            req.organisationId,
             dto.maxPerDocument,
         );
         return { generated: count, message: `Generated ${count} FAQ entries` };
@@ -144,7 +145,7 @@ export class FaqController {
     @ApiOperation({ summary: 'Generate FAQs from all sources using AI' })
     async generateAll(@Body() body: { maxPerSource?: number }, @Request() req: any) {
         const count = await this.faqGeneratorService.generateFromAllSources(
-            req.user.organisationId,
+            req.organisationId,
             body.maxPerSource || 5,
         );
         return { generated: count, message: `Generated ${count} FAQ entries from all sources` };
@@ -158,7 +159,7 @@ export class FaqController {
         const result = await this.faqService.findAll({
             limit: 1000,
             status: query.status as any,
-        }, req.user.organisationId);
+        }, req.organisationId);
 
         return {
             faqs: result.items.map((faq) => ({

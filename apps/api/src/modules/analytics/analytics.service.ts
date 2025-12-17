@@ -10,19 +10,30 @@ export class AnalyticsService {
         type: AnalyticsEventType,
         userId?: string,
         metadata?: Record<string, unknown>,
+        organisationId?: string,
     ) {
         return this.prisma.analyticsEvent.create({
             data: {
                 type,
                 userId,
+                organisationId,
                 metadata: (metadata || {}) as any,
-            },
+            } as any,
         });
     }
 
-    async getDashboardStats(days: number = 30) {
+    async getDashboardStats(days: number = 30, organisationId?: string) {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - days);
+
+        const eventWhere: any = { timestamp: { gte: startDate } };
+        if (organisationId) eventWhere.organisationId = organisationId;
+
+        const docWhere: any = {};
+        if (organisationId) docWhere.source = { organisationId };
+
+        const chunkWhere: any = {};
+        if (organisationId) chunkWhere.document = { source: { organisationId } };
 
         const [
             totalSearches,
@@ -34,16 +45,16 @@ export class AnalyticsService {
             feedbackStats,
         ] = await Promise.all([
             this.prisma.analyticsEvent.count({
-                where: { type: 'SEARCH', timestamp: { gte: startDate } },
+                where: { ...eventWhere, type: 'SEARCH' },
             }),
             this.prisma.analyticsEvent.count({
-                where: { type: 'RAG_QUERY', timestamp: { gte: startDate } },
+                where: { ...eventWhere, type: 'RAG_QUERY' },
             }),
-            this.prisma.document.count(),
-            this.prisma.chunk.count(),
-            this.getSearchesByDay(startDate),
-            this.getTopQueries(startDate, 10),
-            this.getFeedbackStats(startDate),
+            this.prisma.document.count({ where: docWhere }),
+            this.prisma.chunk.count({ where: chunkWhere }),
+            this.getSearchesByDay(startDate, organisationId),
+            this.getTopQueries(startDate, 10, organisationId),
+            this.getFeedbackStats(startDate, organisationId),
         ]);
 
         return {
@@ -64,12 +75,15 @@ export class AnalyticsService {
         };
     }
 
-    private async getSearchesByDay(startDate: Date) {
+    private async getSearchesByDay(startDate: Date, organisationId?: string) {
+        const where: any = {
+            type: { in: ['SEARCH', 'RAG_QUERY'] },
+            timestamp: { gte: startDate },
+        };
+        if (organisationId) where.organisationId = organisationId;
+
         const events = await this.prisma.analyticsEvent.findMany({
-            where: {
-                type: { in: ['SEARCH', 'RAG_QUERY'] },
-                timestamp: { gte: startDate },
-            },
+            where,
             select: { type: true, timestamp: true },
         });
 
@@ -92,12 +106,15 @@ export class AnalyticsService {
             .sort((a, b) => a.date.localeCompare(b.date));
     }
 
-    private async getTopQueries(startDate: Date, limit: number) {
+    private async getTopQueries(startDate: Date, limit: number, organisationId?: string) {
+        const where: any = {
+            type: { in: ['SEARCH', 'RAG_QUERY'] },
+            timestamp: { gte: startDate },
+        };
+        if (organisationId) where.organisationId = organisationId;
+
         const events = await this.prisma.analyticsEvent.findMany({
-            where: {
-                type: { in: ['SEARCH', 'RAG_QUERY'] },
-                timestamp: { gte: startDate },
-            },
+            where,
             select: { metadata: true },
         });
 
@@ -117,12 +134,15 @@ export class AnalyticsService {
             .slice(0, limit);
     }
 
-    private async getFeedbackStats(startDate: Date) {
+    private async getFeedbackStats(startDate: Date, organisationId?: string) {
+        const where: any = {
+            type: 'FEEDBACK',
+            timestamp: { gte: startDate },
+        };
+        if (organisationId) where.organisationId = organisationId;
+
         const events = await this.prisma.analyticsEvent.findMany({
-            where: {
-                type: 'FEEDBACK',
-                timestamp: { gte: startDate },
-            },
+            where,
             select: { metadata: true },
         });
 
@@ -138,12 +158,13 @@ export class AnalyticsService {
         return { positive, negative, total: positive + negative };
     }
 
-    async getEvents(query: { page?: number | string; limit?: number | string; type?: AnalyticsEventType }) {
+    async getEvents(query: { page?: number | string; limit?: number | string; type?: AnalyticsEventType }, organisationId?: string) {
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 20;
         const skip = (page - 1) * limit;
 
-        const where = query.type ? { type: query.type } : {};
+        const where: any = query.type ? { type: query.type } : {};
+        if (organisationId) where.organisationId = organisationId;
 
         const [events, total] = await Promise.all([
             this.prisma.analyticsEvent.findMany({
@@ -151,6 +172,7 @@ export class AnalyticsService {
                 skip,
                 take: limit,
                 orderBy: { timestamp: 'desc' },
+                include: { user: { select: { id: true, name: true, email: true } } },
             }),
             this.prisma.analyticsEvent.count({ where }),
         ]);

@@ -39,13 +39,23 @@ export class SyncProcessor extends WorkerHost {
 
     private getEmbeddingService(): EmbeddingService {
         if (!this.embeddingService) {
-            // Try config service first, then fall back to process.env
-            const apiKey = this.configService.get<string>('openai.apiKey') || process.env.OPENAI_API_KEY;
-            console.log(`[Sync] Initializing EmbeddingService with key: ${apiKey?.substring(0, 10)}...`);
-            if (!apiKey) {
-                throw new Error('OpenAI API key not configured');
+            // Check if we should use OpenRouter
+            const useOpenRouter = process.env.USE_OPENROUTER === 'true';
+
+            let apiKey = this.configService.get<string>('openai.apiKey') || process.env.OPENAI_API_KEY;
+            let baseURL = this.configService.get<string>('openai.baseURL') || process.env.OPENAI_BASE_URL;
+
+            if (useOpenRouter) {
+                console.log('[Sync] Using OpenRouter configuration');
+                apiKey = process.env.OPENROUTER_API_KEY || apiKey;
+                baseURL = 'https://openrouter.ai/api/v1';
             }
-            this.embeddingService = new EmbeddingService(apiKey);
+
+            console.log(`[Sync] Initializing EmbeddingService with key: ${apiKey?.substring(0, 10)}... URL: ${baseURL || 'default'}`);
+            if (!apiKey) {
+                throw new Error('API key not configured (OpenAI or OpenRouter)');
+            }
+            this.embeddingService = new EmbeddingService(apiKey, undefined, baseURL);
         }
         return this.embeddingService;
     }

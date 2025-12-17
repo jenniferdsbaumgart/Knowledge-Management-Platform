@@ -32,7 +32,7 @@ export class RagService {
         }
     }
 
-    async generateResponse(dto: RagQueryDto) {
+    async generateResponse(dto: RagQueryDto, organisationId?: string) {
         const { query, conversationHistory = [], maxTokens = 1024, temperature = 0.7 } = dto;
 
         // Retrieve relevant context - increased limit for better coverage
@@ -40,7 +40,7 @@ export class RagService {
             query,
             limit: 10,
             mode: 'hybrid' as any,
-        });
+        }, organisationId);
 
         console.log(`[RAG] Query: "${query}"`);
         console.log(`[RAG] Search returned ${searchResults.results.length} results (took ${searchResults.took}ms)`);

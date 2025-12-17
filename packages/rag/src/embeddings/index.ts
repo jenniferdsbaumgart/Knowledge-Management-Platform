@@ -18,8 +18,11 @@ export class EmbeddingService {
     private client: OpenAI;
     private model: string;
 
-    constructor(apiKey: string, model: string = EMBEDDING.MODEL) {
-        this.client = new OpenAI({ apiKey });
+    constructor(apiKey: string, model: string = EMBEDDING.MODEL, baseURL?: string) {
+        this.client = new OpenAI({
+            apiKey,
+            baseURL: baseURL || undefined
+        });
         this.model = model;
     }
 
