@@ -29,7 +29,16 @@ export class SearchService {
 
     async search(dto: SearchQueryDto) {
         const startTime = Date.now();
-        const { query, limit = 10, offset = 0, mode = 'hybrid', sourceIds } = dto;
+        const { query, limit = 10, offset = 0, sourceIds } = dto;
+        let { mode = 'hybrid' } = dto;
+
+        // When using OpenRouter, fall back to keyword-only search
+        // because OpenRouter doesn't support embedding API
+        const useOpenRouter = process.env.USE_OPENROUTER === 'true';
+        if (useOpenRouter && (mode === 'semantic' || mode === 'hybrid')) {
+            console.log('[Search] OpenRouter enabled - falling back to keyword-only search');
+            mode = 'keyword';
+        }
 
         let results: SearchResultItem[];
 

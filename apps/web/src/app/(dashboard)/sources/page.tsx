@@ -18,10 +18,18 @@ export default function SourcesPage() {
     const queryClient = useQueryClient();
     const [showForm, setShowForm] = useState(false);
 
-    const { data: sources, isLoading } = useQuery({
+    const { data: sources, isLoading, error } = useQuery({
         queryKey: ["sources"],
-        queryFn: () => sourcesApi.list().then((res) => res.data),
+        queryFn: async () => {
+            console.log("[Sources] Fetching sources...");
+            const res = await sourcesApi.list();
+            console.log("[Sources] API response:", res.data);
+            return res.data;
+        },
     });
+
+    // Debug log
+    console.log("[Sources] State - isLoading:", isLoading, "error:", error, "sources:", sources);
 
     const syncMutation = useMutation({
         mutationFn: (sourceId: string) => syncApi.trigger(sourceId),
@@ -91,24 +99,17 @@ export default function SourcesPage() {
                     </motion.div>
                 ) : (
                     <motion.div
-                        initial="hidden"
-                        animate="show"
-                        variants={{
-                            hidden: { opacity: 0 },
-                            show: {
-                                opacity: 1,
-                                transition: { staggerChildren: 0.1 }
-                            }
-                        }}
+                        key="sources-grid"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
                     >
-                        {sources?.items?.map((source: any) => (
+                        {sources?.items?.map((source: any, index: number) => (
                             <motion.div
                                 key={source.id}
-                                variants={{
-                                    hidden: { y: 20, opacity: 0 },
-                                    show: { y: 0, opacity: 1 }
-                                }}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
                             >
                                 <Card className="h-full group hover:shadow-lg transition-all duration-300 border hover:border-primary/50">
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

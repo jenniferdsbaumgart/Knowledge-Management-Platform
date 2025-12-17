@@ -6,16 +6,30 @@ import { RagQueryDto } from './dto/search.dto';
 
 @Injectable()
 export class RagService {
-    private openai: OpenAI;
+    private client: OpenAI;
     private model: string;
 
     constructor(
         private searchService: SearchService,
         private configService: ConfigService,
     ) {
-        const apiKey = this.configService.get<string>('openai.apiKey');
-        this.openai = new OpenAI({ apiKey });
-        this.model = this.configService.get<string>('openai.chatModel') || 'gpt-4';
+        // Check if we should use OpenRouter
+        const useOpenRouter = process.env.USE_OPENROUTER === 'true';
+
+        if (useOpenRouter) {
+            const openRouterKey = process.env.OPENROUTER_API_KEY;
+            this.client = new OpenAI({
+                apiKey: openRouterKey,
+                baseURL: 'https://openrouter.ai/api/v1',
+            });
+            this.model = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free';
+            console.log('[RAG] Using OpenRouter with model:', this.model);
+        } else {
+            const apiKey = this.configService.get<string>('openai.apiKey');
+            this.client = new OpenAI({ apiKey });
+            this.model = this.configService.get<string>('openai.chatModel') || 'gpt-4';
+            console.log('[RAG] Using OpenAI with model:', this.model);
+        }
     }
 
     async generateResponse(dto: RagQueryDto) {
@@ -67,7 +81,7 @@ ${context || 'No relevant documents found.'}`,
         ];
 
         // Generate response
-        const response = await this.openai.chat.completions.create({
+        const response = await this.client.chat.completions.create({
             model: this.model,
             messages,
             max_tokens: maxTokens,
