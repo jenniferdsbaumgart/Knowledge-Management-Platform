@@ -1,0 +1,145 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import OpenAI from 'openai';
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { FaqStatus } from '@prisma/client';
+
+interface GeneratedFaq {
+    question: string;
+    answer: string;
+    category?: string;
+}
+
+@Injectable()
+export class FaqGeneratorService {
+    private client: OpenAI;
+    private model: string;
+    private useOpenRouter: boolean;
+
+    constructor(
+        private prisma: PrismaService,
+        private configService: ConfigService,
+    ) {
+        // Check if we should use OpenRouter
+        console.log('[FaqGenerator] USE_OPENROUTER env value:', process.env.USE_OPENROUTER);
+        this.useOpenRouter = process.env.USE_OPENROUTER === 'true';
+
+        if (this.useOpenRouter) {
+            const openRouterKey = process.env.OPENROUTER_API_KEY;
+            this.client = new OpenAI({
+                apiKey: openRouterKey,
+                baseURL: 'https://openrouter.ai/api/v1',
+            });
+            this.model = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free';
+            console.log('[FaqGenerator] Using OpenRouter with model:', this.model);
+        } else {
+            const apiKey = this.configService.get<string>('openai.apiKey');
+            this.client = new OpenAI({ apiKey });
+            this.model = this.configService.get<string>('openai.chatModel') || 'gpt-4';
+            console.log('[FaqGenerator] Using OpenAI with model:', this.model);
+        }
+    }
+
+    async generateFromSource(sourceId: string, maxPerDocument: number = 5): Promise<number> {
+        console.log(`[FaqGenerator] Generating FAQs from source: ${sourceId}`);
+
+        // Get documents from source
+        const documents = await this.prisma.document.findMany({
+            where: { sourceId },
+            include: {
+                chunks: {
+                    orderBy: { createdAt: 'asc' },
+                },
+            },
+        });
+
+        if (documents.length === 0) {
+            console.log(`[FaqGenerator] No documents found for source ${sourceId}`);
+            return 0;
+        }
+
+        let totalGenerated = 0;
+
+        for (const doc of documents) {
+            // Combine chunks into content
+            const content = doc.chunks.map((c) => c.content).join('\n\n');
+
+            if (!content || content.length < 100) {
+                console.log(`[FaqGenerator] Skipping document ${doc.id} - content too short`);
+                continue;
+            }
+
+            try {
+                const faqs = await this.generateFaqs(content, maxPerDocument);
+                console.log(`[FaqGenerator] Generated ${faqs.length} FAQs from document: ${doc.title}`);
+
+                // Save FAQs
+                for (const faq of faqs) {
+                    await this.prisma.faqEntry.create({
+                        data: {
+                            question: faq.question,
+                            answer: faq.answer,
+                            sourceIds: [sourceId],
+                            confidence: 0.8, // Default confidence for AI-generated
+                            status: FaqStatus.DRAFT,
+                        },
+                    });
+                    totalGenerated++;
+                }
+            } catch (error) {
+                console.error(`[FaqGenerator] Error generating FAQs for document ${doc.id}:`, error);
+            }
+        }
+
+        console.log(`[FaqGenerator] Total FAQs generated: ${totalGenerated}`);
+        return totalGenerated;
+    }
+
+    private async generateFaqs(content: string, maxCount: number): Promise<GeneratedFaq[]> {
+        // Truncate content if too long (max ~10k tokens)
+        const truncatedContent = content.substring(0, 15000);
+
+        const prompt = `You are an expert at creating company FAQs.
+Based on the content below, generate up to ${maxCount} frequently asked questions that a customer or user might ask.
+
+RULES:
+- Questions should be natural and direct
+- Answers should be concise (max 3 paragraphs)
+- Include enough context for standalone understanding
+- Use professional language
+- Only generate questions that can be fully answered from the content
+
+OUTPUT FORMAT (JSON array):
+[
+  {"question": "...", "answer": "..."},
+  {"question": "...", "answer": "..."}
+]
+
+CONTENT:
+${truncatedContent}`;
+
+        const response = await this.client.chat.completions.create({
+            model: this.model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 2000,
+            temperature: 0.7,
+        });
+
+        const responseText = response.choices[0]?.message?.content || '[]';
+
+        try {
+            // Extract JSON from response (handle markdown code blocks)
+            const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+            if (!jsonMatch) {
+                console.error('[FaqGenerator] No JSON array found in response');
+                return [];
+            }
+
+            const faqs = JSON.parse(jsonMatch[0]) as GeneratedFaq[];
+            return faqs.slice(0, maxCount);
+        } catch (error) {
+            console.error('[FaqGenerator] Failed to parse FAQ response:', responseText);
+            return [];
+        }
+    }
+}

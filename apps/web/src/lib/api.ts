@@ -119,3 +119,25 @@ export const uploadApi = {
     list: (sourceId: string) => api.get(`/upload/${sourceId}`),
     delete: (sourceId: string, fileName: string) => api.delete(`/upload/${sourceId}/${fileName}`),
 };
+
+// FAQ API
+export const faqApi = {
+    list: (params?: { page?: number; limit?: number; status?: string; categoryId?: string }) =>
+        api.get('/faq', { params }),
+    get: (id: string) => api.get(`/faq/${id}`),
+    create: (data: { question: string; answer: string; categoryId?: string; status?: string }) =>
+        api.post('/faq', data),
+    update: (id: string, data: { question?: string; answer?: string; categoryId?: string; status?: string }) =>
+        api.put(`/faq/${id}`, data),
+    delete: (id: string) => api.delete(`/faq/${id}`),
+    approve: (id: string) => api.post(`/faq/${id}/approve`),
+    archive: (id: string) => api.post(`/faq/${id}/archive`),
+    generate: (sourceId: string, maxPerDocument?: number) =>
+        api.post('/faq/generate', { sourceId, maxPerDocument }),
+    categories: () => api.get('/faq/categories'),
+    createCategory: (data: { name: string; slug?: string }) => api.post('/faq/categories', data),
+    deleteCategory: (id: string) => api.delete(`/faq/categories/${id}`),
+    // Public endpoints
+    public: () => api.get('/faq/public/list'),
+    search: (query: string, limit?: number) => api.post('/faq/public/search', { query, limit }),
+};

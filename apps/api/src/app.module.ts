@@ -21,6 +21,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { CmsModule } from './modules/cms/cms.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { FaqModule } from './modules/faq/faq.module';
 
 @Module({
     imports: [
@@ -57,6 +58,7 @@ import { UploadModule } from './modules/upload/upload.module';
         CmsModule,
         WebhooksModule,
         UploadModule,
+        FaqModule,
     ],
 })
 export class AppModule { }

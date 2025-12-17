@@ -14,6 +14,7 @@ import {
     ChevronLeft,
     Search,
     LogOut,
+    HelpCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,6 +24,7 @@ const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Chat", href: "/chat", icon: Search },
     { name: "Sources", href: "/sources", icon: Database },
+    { name: "FAQ", href: "/faq", icon: HelpCircle },
     { name: "Content", href: "/content", icon: FileText },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Sync", href: "/sync", icon: RefreshCw },

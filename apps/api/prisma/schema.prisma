@@ -204,3 +204,44 @@ model AnalyticsEvent {
   @@index([type, timestamp])
   @@map("analytics_events")
 }
+
+// ==================== FAQ ====================
+
+enum FaqStatus {
+  DRAFT
+  APPROVED
+  ARCHIVED
+}
+
+model FaqCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  entries FaqEntry[]
+
+  @@map("faq_categories")
+}
+
+model FaqEntry {
+  id         String    @id @default(uuid()) @db.Uuid
+  question   String
+  answer     String    @db.Text
+  categoryId String?   @map("category_id") @db.Uuid
+  sourceIds  String[]  @db.Uuid
+  confidence Float     @default(0)
+  status     FaqStatus @default(DRAFT)
+  viewCount  Int       @default(0) @map("view_count")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  category FaqCategory? @relation(fields: [categoryId], references: [id])
+
+  @@index([status])
+  @@index([categoryId])
+  @@map("faq_entries")
+}
