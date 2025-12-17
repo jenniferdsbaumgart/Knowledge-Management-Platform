@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Send, User as UserIcon, Bot, Loader2, Sparkles, Download } from 'lucide-react';
+import { Send, User as UserIcon, Bot, Loader2, Sparkles, Download, Database } from 'lucide-react';
 import { useActiveOrganisation } from '@/context/ActiveOrganisationContext';
 import { api } from '@/lib/api';
+import { ExportModal } from '@/components/faq/export-modal';
 
 interface Message {
     id: string;
@@ -19,6 +20,7 @@ export function FaqChat() {
     const [query, setQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [showExportModal, setShowExportModal] = useState(false);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,13 +114,21 @@ export function FaqChat() {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => setShowExportModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors"
+                        title="Export knowledge base"
+                    >
+                        <Database className="w-4 h-4" />
+                        Export KB
+                    </button>
+                    <button
                         onClick={handleExport}
                         disabled={messages.length === 0}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Export conversation"
                     >
                         <Download className="w-4 h-4" />
-                        Export
+                        Chat
                     </button>
                     <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full">
                         Deep RAG
@@ -204,6 +214,12 @@ export function FaqChat() {
                     </button>
                 </form>
             </div>
+
+            {/* Export Modal */}
+            <ExportModal
+                open={showExportModal}
+                onClose={() => setShowExportModal(false)}
+            />
         </div>
     );
 }
