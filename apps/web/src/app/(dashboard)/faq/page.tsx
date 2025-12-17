@@ -56,8 +56,16 @@ export default function FaqPage() {
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [selectedSource, setSelectedSource] = useState<string>("");
+
+    // Create State
     const [newQuestion, setNewQuestion] = useState("");
     const [newAnswer, setNewAnswer] = useState("");
+
+    // Edit State
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editingFaq, setEditingFaq] = useState<FaqEntry | null>(null);
+    const [editQuestion, setEditQuestion] = useState("");
+    const [editAnswer, setEditAnswer] = useState("");
 
     const { data: faqData, isLoading } = useQuery({
         queryKey: ["faqs", statusFilter],
@@ -104,6 +112,16 @@ export default function FaqPage() {
             setAddDialogOpen(false);
             setNewQuestion("");
             setNewAnswer("");
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (data: { id: string; question: string; answer: string }) =>
+            faqApi.update(data.id, { question: data.question, answer: data.answer }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["faqs"] });
+            setEditDialogOpen(false);
+            setEditingFaq(null);
         },
     });
 
@@ -264,6 +282,52 @@ export default function FaqPage() {
                 </div>
             </div>
 
+            {/* Edit Dialog */}
+            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit FAQ</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Question</label>
+                            <input
+                                type="text"
+                                value={editQuestion}
+                                onChange={(e) => setEditQuestion(e.target.value)}
+                                placeholder="Enter the question..."
+                                className="w-full px-3 py-2 border rounded-md bg-background"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Answer</label>
+                            <textarea
+                                value={editAnswer}
+                                onChange={(e) => setEditAnswer(e.target.value)}
+                                placeholder="Enter the answer..."
+                                rows={4}
+                                className="w-full px-3 py-2 border rounded-md bg-background resize-none"
+                            />
+                        </div>
+                        <Button
+                            onClick={() => {
+                                if (editingFaq && editQuestion && editAnswer) {
+                                    updateMutation.mutate({
+                                        id: editingFaq.id,
+                                        question: editQuestion,
+                                        answer: editAnswer
+                                    });
+                                }
+                            }}
+                            disabled={!editQuestion || !editAnswer || updateMutation.isPending}
+                            className="w-full"
+                        >
+                            {updateMutation.isPending ? "Updating..." : "Update FAQ"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* JSON Export Panel */}
             {showJsonExport && (
                 <Card>
@@ -364,7 +428,16 @@ export default function FaqPage() {
                                                     Archive
                                                 </Button>
                                             )}
-                                            <Button size="sm" variant="ghost">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    setEditingFaq(faq);
+                                                    setEditQuestion(faq.question);
+                                                    setEditAnswer(faq.answer);
+                                                    setEditDialogOpen(true);
+                                                }}
+                                            >
                                                 <Edit className="mr-1 h-3 w-3" />
                                                 Edit
                                             </Button>
