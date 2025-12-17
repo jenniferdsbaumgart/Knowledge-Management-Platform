@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { knowledgeApi, analyticsApi, sourcesApi } from "@/lib/api";
+import { knowledgeApi, analyticsApi, sourcesApi, authApi } from "@/lib/api";
 import {
     FileText,
     Database,
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SuperAdminView } from "@/components/dashboard/super-admin-view";
 
 const container = {
     hidden: { opacity: 0 },
@@ -35,7 +36,7 @@ const item = {
     show: { y: 0, opacity: 1 }
 };
 
-export default function DashboardPage() {
+function TenantDashboard() {
     const { data: knowledgeStats, isLoading: statsLoading } = useQuery({
         queryKey: ["knowledge-stats"],
         queryFn: () => knowledgeApi.stats().then((res) => res.data),
@@ -251,4 +252,28 @@ export default function DashboardPage() {
             </div>
         </div>
     );
+}
+
+export default function DashboardPage() {
+    const { data: user, isLoading } = useQuery({
+        queryKey: ["user"],
+        queryFn: () => authApi.me().then((res) => res.data),
+    });
+
+    if (isLoading) {
+        return <div className="p-8 space-y-8">
+            <Skeleton className="h-12 w-64" />
+            <div className="grid gap-4 md:grid-cols-3">
+                <Skeleton className="h-32" />
+                <Skeleton className="h-32" />
+                <Skeleton className="h-32" />
+            </div>
+        </div>;
+    }
+
+    if (user?.role === 'SUPER_ADMIN') {
+        return <SuperAdminView />;
+    }
+
+    return <TenantDashboard />;
 }
