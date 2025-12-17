@@ -25,7 +25,7 @@ const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     // Organisations is now the Super Admin Dashboard
     // { name: "Organisations", href: "/organisations", icon: Building2 }, 
-    { name: "Chat", href: "/chat", icon: Search },
+    { name: "Chat", href: "/faq/chat", icon: Search },
     { name: "Sources", href: "/sources", icon: Database },
     { name: "FAQ", href: "/faq", icon: HelpCircle },
     { name: "Content", href: "/content", icon: FileText },
