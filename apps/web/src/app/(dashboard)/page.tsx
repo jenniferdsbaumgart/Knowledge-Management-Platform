@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SuperAdminView } from "@/components/dashboard/super-admin-view";
+import { OrganisationsList } from "@/components/organisations/organisations-list";
 
 const container = {
     hidden: { opacity: 0 },
@@ -272,8 +272,10 @@ export default function DashboardPage() {
     }
 
     if (user?.role === 'SUPER_ADMIN') {
-        return <SuperAdminView />;
+        // Super Admin sees the Organisation Hub
+        return <OrganisationsList />;
     }
 
+    // Role-based dashboard: Users see their tenant dashboard (analytics, etc.)
     return <TenantDashboard />;
 }

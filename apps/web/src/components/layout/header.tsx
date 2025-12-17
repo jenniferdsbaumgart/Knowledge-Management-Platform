@@ -1,8 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Menu, Moon, Sun, Bell, Search } from "lucide-react";
+import { Menu, Moon, Sun, Bell, Search, Building2 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useActiveOrganisation } from "@/context/ActiveOrganisationContext";
+import { organisationsApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 interface HeaderProps {
     onOpenSidebar: () => void;
@@ -10,6 +13,17 @@ interface HeaderProps {
 
 export function Header({ onOpenSidebar }: HeaderProps) {
     const { theme, setTheme } = useTheme();
+    const { activeOrgId } = useActiveOrganisation();
+
+    const { data: activeOrg } = useQuery({
+        queryKey: ["organisation", activeOrgId],
+        queryFn: async () => {
+            if (!activeOrgId) return null;
+            const res = await organisationsApi.get(activeOrgId);
+            return res.data;
+        },
+        enabled: !!activeOrgId,
+    });
 
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 bg-background/60 px-6 backdrop-blur-xl transition-all border-b border-border/40">
@@ -37,6 +51,13 @@ export function Header({ onOpenSidebar }: HeaderProps) {
             </div>
 
             <div className="flex flex-1 justify-end items-center gap-2">
+                {activeOrg && (
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-full border border-primary/20 text-xs font-medium text-primary mr-2">
+                        <Building2 className="w-3.5 h-3.5" />
+                        <span>{activeOrg.name}</span>
+                    </div>
+                )}
+
                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                     <Bell className="h-5 w-5" />
                 </Button>

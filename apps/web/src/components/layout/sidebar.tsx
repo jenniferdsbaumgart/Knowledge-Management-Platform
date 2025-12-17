@@ -23,7 +23,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 
 const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Organisations", href: "/organisations", icon: Building2 },
+    // Organisations is now the Super Admin Dashboard
+    // { name: "Organisations", href: "/organisations", icon: Building2 }, 
     { name: "Chat", href: "/chat", icon: Search },
     { name: "Sources", href: "/sources", icon: Database },
     { name: "FAQ", href: "/faq", icon: HelpCircle },

@@ -9,11 +9,18 @@ export const api = axios.create({
     },
 });
 
-// Add auth token to requests
+// Add auth token and organization context to requests
 api.interceptors.request.use((config) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        const orgId = localStorage.getItem('activeOrganisationId');
+        if (orgId) {
+            config.headers['X-Organisation-Id'] = orgId;
+        }
     }
     return config;
 });
