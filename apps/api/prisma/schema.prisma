@@ -24,8 +24,9 @@ model Organisation {
   // Relations
   users      User[]
   sources    Source[]
-  contents   Content[]
-  faqEntries FaqEntry[]
+  contents        Content[]
+  faqEntries      FaqEntry[]
+  analyticsEvents AnalyticsEvent[]
 
   @@map("organisations")
 }
@@ -218,15 +219,18 @@ enum AnalyticsEventType {
 
 model AnalyticsEvent {
   id        String             @id @default(uuid()) @db.Uuid
-  type      AnalyticsEventType
-  userId    String?            @map("user_id") @db.Uuid
-  metadata  Json               @default("{}")
-  timestamp DateTime           @default(now())
+  type           AnalyticsEventType
+  userId         String?            @map("user_id") @db.Uuid
+  organisationId String?            @map("organisation_id") @db.Uuid
+  metadata       Json               @default("{}")
+  timestamp      DateTime           @default(now())
 
   // Relations
-  user User? @relation(fields: [userId], references: [id])
+  user         User?         @relation(fields: [userId], references: [id])
+  organisation Organisation? @relation(fields: [organisationId], references: [id])
 
   @@index([type, timestamp])
+  @@index([organisationId])
   @@map("analytics_events")
 }
 
