@@ -8,6 +8,7 @@ import {
     Param,
     Query,
     UseGuards,
+    Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -26,41 +27,41 @@ export class SourcesController {
 
     @Get()
     @ApiOperation({ summary: 'Get all data sources' })
-    async findAll(@Query() query: SourceQueryDto) {
-        return this.sourcesService.findAll(query);
+    async findAll(@Query() query: SourceQueryDto, @Request() req: any) {
+        return this.sourcesService.findAll(query, req.user.organisationId);
     }
 
     @Get(':id')
     @ApiOperation({ summary: 'Get a single source by ID' })
-    async findOne(@Param('id') id: string) {
-        return this.sourcesService.findOne(id);
+    async findOne(@Param('id') id: string, @Request() req: any) {
+        return this.sourcesService.findOne(id, req.user.organisationId);
     }
 
     @Post()
     @Roles(UserRole.ADMIN)
     @ApiOperation({ summary: 'Create a new data source' })
-    async create(@Body() dto: CreateSourceDto) {
-        return this.sourcesService.create(dto);
+    async create(@Body() dto: CreateSourceDto, @Request() req: any) {
+        return this.sourcesService.create(dto, req.user.organisationId);
     }
 
     @Put(':id')
     @Roles(UserRole.ADMIN)
     @ApiOperation({ summary: 'Update a data source' })
-    async update(@Param('id') id: string, @Body() dto: UpdateSourceDto) {
-        return this.sourcesService.update(id, dto);
+    async update(@Param('id') id: string, @Body() dto: UpdateSourceDto, @Request() req: any) {
+        return this.sourcesService.update(id, dto, req.user.organisationId);
     }
 
     @Delete(':id')
     @Roles(UserRole.ADMIN)
     @ApiOperation({ summary: 'Delete a data source' })
-    async remove(@Param('id') id: string) {
-        return this.sourcesService.remove(id);
+    async remove(@Param('id') id: string, @Request() req: any) {
+        return this.sourcesService.remove(id, req.user.organisationId);
     }
 
     @Post(':id/test')
     @Roles(UserRole.ADMIN)
     @ApiOperation({ summary: 'Test connection to a data source' })
-    async testConnection(@Param('id') id: string) {
-        return this.sourcesService.testConnection(id);
+    async testConnection(@Param('id') id: string, @Request() req: any) {
+        return this.sourcesService.testConnection(id, req.user.organisationId);
     }
 }

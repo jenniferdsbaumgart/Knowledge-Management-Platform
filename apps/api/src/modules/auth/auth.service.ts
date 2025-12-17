@@ -32,6 +32,16 @@ export class AuthService {
         const userCount = await this.prisma.user.count();
         const role = userCount === 0 ? 'ADMIN' : (dto.role || 'VIEWER');
 
+        // Get or create organisation
+        let organisationId = dto.organisationId;
+        if (!organisationId) {
+            // Default to Jenny org for now
+            const defaultOrg = await this.prisma.organisation.findFirst({
+                where: { slug: 'jenny' },
+            });
+            organisationId = defaultOrg?.id || '00000000-0000-0000-0000-000000000001';
+        }
+
         // Create user
         const user = await this.prisma.user.create({
             data: {
@@ -39,11 +49,13 @@ export class AuthService {
                 password: hashedPassword,
                 name: dto.name,
                 role,
+                organisationId,
             },
+            include: { organisation: true },
         });
 
         // Generate tokens
-        const tokens = await this.generateTokens(user.id, user.email, user.role);
+        const tokens = await this.generateTokens(user.id, user.email, user.role, user.organisationId);
 
         return {
             user: {
@@ -51,6 +63,8 @@ export class AuthService {
                 email: user.email,
                 name: user.name,
                 role: user.role,
+                organisationId: user.organisationId,
+                organisationName: user.organisation.name,
             },
             ...tokens,
         };
@@ -59,6 +73,7 @@ export class AuthService {
     async login(dto: LoginDto): Promise<AuthResponseDto> {
         const user = await this.prisma.user.findUnique({
             where: { email: dto.email },
+            include: { organisation: true },
         });
 
         if (!user) {
@@ -71,7 +86,7 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        const tokens = await this.generateTokens(user.id, user.email, user.role);
+        const tokens = await this.generateTokens(user.id, user.email, user.role, user.organisationId);
 
         // Store refresh token
         await this.prisma.user.update({
@@ -85,6 +100,8 @@ export class AuthService {
                 email: user.email,
                 name: user.name,
                 role: user.role,
+                organisationId: user.organisationId,
+                organisationName: user.organisation.name,
             },
             ...tokens,
         };
@@ -113,7 +130,7 @@ export class AuthService {
             throw new UnauthorizedException('Access denied');
         }
 
-        const tokens = await this.generateTokens(user.id, user.email, user.role);
+        const tokens = await this.generateTokens(user.id, user.email, user.role, user.organisationId);
 
         await this.prisma.user.update({
             where: { id: user.id },
@@ -131,12 +148,13 @@ export class AuthService {
                 email: true,
                 name: true,
                 role: true,
+                organisationId: true,
             },
         });
     }
 
-    private async generateTokens(userId: string, email: string, role: string) {
-        const payload = { sub: userId, email, role };
+    private async generateTokens(userId: string, email: string, role: string, organisationId: string) {
+        const payload = { sub: userId, email, role, organisationId };
 
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload),

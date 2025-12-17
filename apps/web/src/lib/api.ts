@@ -145,3 +145,13 @@ export const faqApi = {
     public: () => api.get('/faq/public/list'),
     search: (query: string, limit?: number) => api.post('/faq/public/search', { query, limit }),
 };
+
+// Organisations API (super admin only)
+export const organisationsApi = {
+    list: () => api.get('/organisations'),
+    get: (id: string) => api.get(`/organisations/${id}`),
+    create: (data: { name: string; slug?: string }) => api.post('/organisations', data),
+    update: (id: string, data: { name?: string; slug?: string }) => api.put(`/organisations/${id}`, data),
+    delete: (id: string) => api.delete(`/organisations/${id}`),
+    switch: (organisationId: string) => api.post('/organisations/switch', { organisationId }),
+};

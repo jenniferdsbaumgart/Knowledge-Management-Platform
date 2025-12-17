@@ -21,6 +21,11 @@ export class RegisterDto {
     @IsOptional()
     @IsEnum(UserRole)
     role?: UserRole;
+
+    @ApiPropertyOptional({ description: 'Organisation ID to join' })
+    @IsOptional()
+    @IsString()
+    organisationId?: string;
 }
 
 export class LoginDto {
@@ -50,6 +55,8 @@ export class AuthResponseDto {
         email: string;
         name: string;
         role: UserRole;
+        organisationId: string;
+        organisationName: string;
     };
 
     @ApiProperty()

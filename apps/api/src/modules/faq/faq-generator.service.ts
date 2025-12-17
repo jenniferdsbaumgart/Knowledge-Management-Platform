@@ -40,7 +40,7 @@ export class FaqGeneratorService {
         }
     }
 
-    async generateFromSource(sourceId: string, maxPerDocument: number = 5): Promise<number> {
+    async generateFromSource(sourceId: string, organisationId: string, maxPerDocument: number = 5): Promise<number> {
         console.log(`[FaqGenerator] Generating FAQs from source: ${sourceId}`);
 
         // Get documents from source
@@ -82,6 +82,7 @@ export class FaqGeneratorService {
                             sourceIds: [sourceId],
                             confidence: 0.8, // Default confidence for AI-generated
                             status: FaqStatus.DRAFT,
+                            organisationId,
                         },
                     });
                     totalGenerated++;
@@ -95,10 +96,12 @@ export class FaqGeneratorService {
         return totalGenerated;
     }
 
-    async generateFromAllSources(maxPerSource: number = 5): Promise<number> {
+    async generateFromAllSources(organisationId: string, maxPerSource: number = 5): Promise<number> {
         console.log('[FaqGenerator] Generating FAQs from ALL sources...');
 
-        const sources = await this.prisma.source.findMany();
+        const sources = await this.prisma.source.findMany({
+            where: { organisationId },
+        });
 
         if (sources.length === 0) {
             console.log('[FaqGenerator] No sources found');
@@ -110,7 +113,7 @@ export class FaqGeneratorService {
         let totalGenerated = 0;
         for (const source of sources) {
             try {
-                const count = await this.generateFromSource(source.id, maxPerSource);
+                const count = await this.generateFromSource(source.id, organisationId, maxPerSource);
                 totalGenerated += count;
             } catch (error) {
                 console.error(`[FaqGenerator] Error processing source ${source.name}:`, error);

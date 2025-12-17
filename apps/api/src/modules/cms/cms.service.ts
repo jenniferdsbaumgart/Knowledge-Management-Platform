@@ -84,7 +84,7 @@ export class CmsService {
         return content;
     }
 
-    async create(authorId: string, dto: CreateContentDto) {
+    async create(authorId: string, organisationId: string, dto: CreateContentDto) {
         // Check for duplicate slug
         const existing = await this.prisma.content.findUnique({
             where: { slug: dto.slug },
@@ -101,6 +101,7 @@ export class CmsService {
                 body: dto.body,
                 status: dto.status || ContentStatus.DRAFT,
                 authorId,
+                organisationId,
             },
         });
     }

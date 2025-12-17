@@ -14,11 +14,12 @@ export class FaqService {
 
     // ==================== FAQ ENTRIES ====================
 
-    async findAll(query: FaqQueryDto) {
+    async findAll(query: FaqQueryDto, organisationId?: string) {
         const { page = 1, limit = 20, status, categoryId } = query;
         const skip = (page - 1) * limit;
 
         const where: any = {};
+        if (organisationId) where.organisationId = organisationId;
         if (status) where.status = status;
         if (categoryId) where.categoryId = categoryId;
 
@@ -55,7 +56,7 @@ export class FaqService {
         return entry;
     }
 
-    async create(dto: CreateFaqEntryDto) {
+    async create(dto: CreateFaqEntryDto, organisationId: string) {
         return this.prisma.faqEntry.create({
             data: {
                 question: dto.question,
@@ -63,6 +64,7 @@ export class FaqService {
                 categoryId: dto.categoryId,
                 sourceIds: dto.sourceIds || [],
                 status: dto.status || FaqStatus.DRAFT,
+                organisationId,
             },
             include: { category: true },
         });

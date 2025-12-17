@@ -15,6 +15,7 @@ import {
     Search,
     LogOut,
     HelpCircle,
+    Building2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,6 +23,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 
 const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Organisations", href: "/organisations", icon: Building2 },
     { name: "Chat", href: "/chat", icon: Search },
     { name: "Sources", href: "/sources", icon: Database },
     { name: "FAQ", href: "/faq", icon: HelpCircle },

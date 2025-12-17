@@ -22,6 +22,7 @@ import { CmsModule } from './modules/cms/cms.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { FaqModule } from './modules/faq/faq.module';
+import { OrganisationsModule } from './modules/organisations/organisations.module';
 
 @Module({
     imports: [
@@ -59,6 +60,7 @@ import { FaqModule } from './modules/faq/faq.module';
         WebhooksModule,
         UploadModule,
         FaqModule,
+        OrganisationsModule,
     ],
 })
 export class AppModule { }

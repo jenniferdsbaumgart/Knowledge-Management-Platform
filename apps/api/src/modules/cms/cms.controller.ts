@@ -50,9 +50,10 @@ export class CmsController {
     @ApiOperation({ summary: 'Create new content' })
     async create(
         @CurrentUser('id') userId: string,
+        @CurrentUser('organisationId') organisationId: string,
         @Body() dto: { title: string; slug: string; body: string; status?: ContentStatus },
     ) {
-        return this.cmsService.create(userId, dto);
+        return this.cmsService.create(userId, organisationId, dto);
     }
 
     @Put(':id')
