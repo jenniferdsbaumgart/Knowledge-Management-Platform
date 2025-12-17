@@ -135,6 +135,42 @@ export class FaqController {
         return { generated: count, message: `Generated ${count} FAQ entries` };
     }
 
+    @Post('generate-all')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(UserRole.ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Generate FAQs from all sources using AI' })
+    async generateAll(@Body() body: { maxPerSource?: number }) {
+        const count = await this.faqGeneratorService.generateFromAllSources(
+            body.maxPerSource || 5,
+        );
+        return { generated: count, message: `Generated ${count} FAQ entries from all sources` };
+    }
+
+    @Get('export/json')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Export all FAQs as JSON' })
+    async exportJson(@Query() query: { status?: string }) {
+        const result = await this.faqService.findAll({
+            limit: 1000,
+            status: query.status as any,
+        });
+
+        return {
+            faqs: result.items.map((faq) => ({
+                id: faq.id,
+                question: faq.question,
+                answer: faq.answer,
+                status: faq.status,
+                category: faq.category?.name || null,
+                createdAt: faq.createdAt,
+            })),
+            total: result.total,
+            exportedAt: new Date().toISOString(),
+        };
+    }
+
     // ==================== PUBLIC ENDPOINTS ====================
 
     @Get('public/list')

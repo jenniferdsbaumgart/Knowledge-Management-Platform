@@ -95,6 +95,32 @@ export class FaqGeneratorService {
         return totalGenerated;
     }
 
+    async generateFromAllSources(maxPerSource: number = 5): Promise<number> {
+        console.log('[FaqGenerator] Generating FAQs from ALL sources...');
+
+        const sources = await this.prisma.source.findMany();
+
+        if (sources.length === 0) {
+            console.log('[FaqGenerator] No sources found');
+            return 0;
+        }
+
+        console.log(`[FaqGenerator] Found ${sources.length} sources`);
+
+        let totalGenerated = 0;
+        for (const source of sources) {
+            try {
+                const count = await this.generateFromSource(source.id, maxPerSource);
+                totalGenerated += count;
+            } catch (error) {
+                console.error(`[FaqGenerator] Error processing source ${source.name}:`, error);
+            }
+        }
+
+        console.log(`[FaqGenerator] Total FAQs generated from all sources: ${totalGenerated}`);
+        return totalGenerated;
+    }
+
     private async generateFaqs(content: string, maxCount: number): Promise<GeneratedFaq[]> {
         // Truncate content if too long (max ~10k tokens)
         const truncatedContent = content.substring(0, 15000);

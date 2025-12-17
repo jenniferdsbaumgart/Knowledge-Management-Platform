@@ -134,6 +134,10 @@ export const faqApi = {
     archive: (id: string) => api.post(`/faq/${id}/archive`),
     generate: (sourceId: string, maxPerDocument?: number) =>
         api.post('/faq/generate', { sourceId, maxPerDocument }),
+    generateAll: (maxPerSource?: number) =>
+        api.post('/faq/generate-all', { maxPerSource }),
+    exportJson: (status?: string) =>
+        api.get('/faq/export/json', { params: { status } }),
     categories: () => api.get('/faq/categories'),
     createCategory: (data: { name: string; slug?: string }) => api.post('/faq/categories', data),
     deleteCategory: (id: string) => api.delete(`/faq/categories/${id}`),

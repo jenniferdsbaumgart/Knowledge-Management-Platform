@@ -107,8 +107,35 @@ export default function FaqPage() {
         },
     });
 
+    const generateAllMutation = useMutation({
+        mutationFn: () => faqApi.generateAll(5),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["faqs"] });
+        },
+    });
+
+    const [showJsonExport, setShowJsonExport] = useState(false);
+    const [copied, setCopied] = useState(false);
+
     const faqs: FaqEntry[] = faqData?.data?.items || [];
     const sources = sourcesData?.data?.items || [];
+
+    const jsonExport = JSON.stringify(
+        faqs.map((f) => ({
+            question: f.question,
+            answer: f.answer,
+            status: f.status,
+            category: f.category?.name || null,
+        })),
+        null,
+        2
+    );
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(jsonExport);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
         <div className="p-6 space-y-6">
@@ -172,6 +199,22 @@ export default function FaqPage() {
                         </DialogContent>
                     </Dialog>
 
+                    <Button
+                        variant="outline"
+                        onClick={() => generateAllMutation.mutate()}
+                        disabled={generateAllMutation.isPending}
+                    >
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        {generateAllMutation.isPending ? "Generating..." : "Generate All"}
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowJsonExport(!showJsonExport)}
+                    >
+                        Export JSON
+                    </Button>
+
                     <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                         <DialogTrigger asChild>
                             <Button>
@@ -220,6 +263,31 @@ export default function FaqPage() {
                     </Dialog>
                 </div>
             </div>
+
+            {/* JSON Export Panel */}
+            {showJsonExport && (
+                <Card>
+                    <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm font-medium">
+                                JSON Export ({faqs.length} FAQs)
+                            </CardTitle>
+                            <Button
+                                size="sm"
+                                variant={copied ? "default" : "outline"}
+                                onClick={copyToClipboard}
+                            >
+                                {copied ? "Copied!" : "Copy to Clipboard"}
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-72 font-mono">
+                            {jsonExport}
+                        </pre>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* FAQ List */}
             {isLoading ? (
