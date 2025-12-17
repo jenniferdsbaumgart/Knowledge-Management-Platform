@@ -22,7 +22,7 @@ export class RagService {
                 apiKey: openRouterKey,
                 baseURL: 'https://openrouter.ai/api/v1',
             });
-            this.model = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free';
+            this.model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
             console.log('[RAG] Using OpenRouter with model:', this.model);
         } else {
             const apiKey = this.configService.get<string>('openai.apiKey');

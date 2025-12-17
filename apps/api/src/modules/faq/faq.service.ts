@@ -7,10 +7,14 @@ import {
     CreateFaqCategoryDto,
     FaqQueryDto,
 } from './dto/faq.dto';
+import { FaqRagService } from './faq-rag.service';
 
 @Injectable()
 export class FaqService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private ragService: FaqRagService
+    ) { }
 
     // ==================== FAQ ENTRIES ====================
 
@@ -57,7 +61,7 @@ export class FaqService {
     }
 
     async create(dto: CreateFaqEntryDto, organisationId: string) {
-        return this.prisma.faqEntry.create({
+        const faq = await this.prisma.faqEntry.create({
             data: {
                 question: dto.question,
                 answer: dto.answer,
@@ -68,16 +72,26 @@ export class FaqService {
             },
             include: { category: true },
         });
+
+        // Background indexing
+        this.ragService.indexFaq(faq.id);
+
+        return faq;
     }
 
     async update(id: string, dto: UpdateFaqEntryDto) {
         await this.findOne(id);
 
-        return this.prisma.faqEntry.update({
+        const faq = await this.prisma.faqEntry.update({
             where: { id },
             data: dto,
             include: { category: true },
         });
+
+        // Re-index
+        this.ragService.indexFaq(faq.id);
+
+        return faq;
     }
 
     async remove(id: string) {

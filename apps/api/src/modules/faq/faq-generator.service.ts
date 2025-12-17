@@ -30,7 +30,7 @@ export class FaqGeneratorService {
         if (this.useOpenRouter) {
             apiKey = process.env.OPENROUTER_API_KEY || apiKey;
             baseURL = 'https://openrouter.ai/api/v1';
-            this.model = process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-exp:free';
+            this.model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
             console.log('[FaqGenerator] Using OpenRouter with model:', this.model);
         } else {
             this.model = this.configService.get<string>('openai.chatModel') || 'gpt-4';
