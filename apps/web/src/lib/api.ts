@@ -157,8 +157,20 @@ export const faqApi = {
 export const organisationsApi = {
     list: () => api.get('/organisations'),
     get: (id: string) => api.get(`/organisations/${id}`),
+    getCurrent: () => api.get('/organisations/current'),
     create: (data: { name: string; slug?: string }) => api.post('/organisations', data),
     update: (id: string, data: { name?: string; slug?: string }) => api.put(`/organisations/${id}`, data),
     delete: (id: string) => api.delete(`/organisations/${id}`),
     switch: (organisationId: string) => api.post('/organisations/switch', { organisationId }),
+};
+
+// Users API (admin only)
+export const usersApi = {
+    list: () => api.get('/users'),
+    get: (id: string) => api.get(`/users/${id}`),
+    create: (data: { email: string; password: string; name: string; role: string }) =>
+        api.post('/users', data),
+    update: (id: string, data: { name?: string; role?: string; password?: string }) =>
+        api.put(`/users/${id}`, data),
+    delete: (id: string) => api.delete(`/users/${id}`),
 };
