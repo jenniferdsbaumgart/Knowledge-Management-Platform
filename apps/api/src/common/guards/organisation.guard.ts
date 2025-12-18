@@ -14,8 +14,13 @@ export class OrganisationGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
 
-        // Header name can be case-insensitive, but usually accessed as lowercase in Express/Nest
-        const organisationId = request.headers['x-organisation-id'];
+        // Get organisation ID from header OR from URL param
+        let organisationId = request.headers['x-organisation-id'];
+
+        // Also check URL params (for routes like /organisations/:organisationId/...)
+        if (!organisationId && request.params?.organisationId) {
+            organisationId = request.params.organisationId;
+        }
 
         if (!organisationId) {
             throw new UnauthorizedException('Organisation context required');

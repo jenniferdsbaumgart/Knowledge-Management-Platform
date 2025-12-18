@@ -23,6 +23,24 @@ import { UserRole } from '@prisma/client';
 export class OrganisationsController {
     constructor(private prisma: PrismaService) { }
 
+    @Get('current')
+    @ApiOperation({ summary: 'Get current user organisation' })
+    async getCurrentOrg(@Request() req: any) {
+        const user = req.user;
+        return this.prisma.organisation.findUnique({
+            where: { id: user.organisationId },
+            include: {
+                _count: {
+                    select: {
+                        users: true,
+                        sources: true,
+                        faqEntries: true,
+                    },
+                },
+            },
+        });
+    }
+
     @Get()
     @Roles(UserRole.SUPER_ADMIN)
     @ApiOperation({ summary: 'List all organisations (super admin only)' })
