@@ -6,7 +6,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { organisationsApi } from "@/lib/api";
-import { Plus, Trash2, Building2, Users, FileText, Sparkles, Pencil, Check, X, CheckCircle } from "lucide-react";
+import { Plus, Trash2, Building2, Users, FileText, Sparkles, Pencil, Check, X } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
