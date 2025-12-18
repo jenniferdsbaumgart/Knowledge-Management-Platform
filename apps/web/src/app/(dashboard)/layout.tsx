@@ -14,7 +14,7 @@ export default function DashboardLayout({
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+    const [user, setUser] = useState<{ name: string; email: string; role?: string } | null>(null);
 
     useEffect(() => {
         const userData = localStorage.getItem("user");

@@ -24,6 +24,10 @@ export default function LoginPage() {
             const response = await authApi.login(email, password);
             localStorage.setItem("accessToken", response.data.accessToken);
             localStorage.setItem("user", JSON.stringify(response.data.user));
+            // Set active organisation to user's organisation
+            if (response.data.user.organisationId) {
+                localStorage.setItem("activeOrganisationId", response.data.user.organisationId);
+            }
             router.push("/");
         } catch (err: any) {
             setError(err.response?.data?.message || "Login failed");

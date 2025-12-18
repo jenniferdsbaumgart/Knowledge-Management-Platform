@@ -15,7 +15,7 @@ import {
     Search,
     LogOut,
     HelpCircle,
-    Building2,
+    Users,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,6 +28,7 @@ const navigation = [
     { name: "Chat", href: "/faq/chat", icon: Search },
     { name: "Sources", href: "/sources", icon: Database },
     { name: "FAQ", href: "/faq", icon: HelpCircle },
+    { name: "Users", href: "/users", icon: Users, adminOnly: true },
     { name: "Content", href: "/content", icon: FileText },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Sync", href: "/sync", icon: RefreshCw },
@@ -39,7 +40,7 @@ interface SidebarProps {
     setOpen: (open: boolean) => void;
     collapsed: boolean;
     setCollapsed: (collapsed: boolean) => void;
-    user: { name: string; email: string } | null;
+    user: { name: string; email: string; role?: string } | null;
     onLogout: () => void;
 }
 
@@ -118,38 +119,46 @@ export function Sidebar({ open, setOpen, collapsed, setCollapsed, user, onLogout
 
                     {/* Navigation */}
                     <div className="flex-1 overflow-y-auto py-8 space-y-2">
-                        {navigation.map((item) => {
-                            const isActive = pathname === item.href;
+                        {navigation
+                            .filter((item) => {
+                                // Hide adminOnly items for CLIENT role
+                                if (item.adminOnly && user?.role === 'CLIENT') {
+                                    return false;
+                                }
+                                return true;
+                            })
+                            .map((item) => {
+                                const isActive = pathname === item.href;
 
-                            return (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={cn(
-                                        "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary",
-                                        isActive
-                                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary"
-                                            : "text-muted-foreground hover:text-foreground",
-                                        isDesktop && collapsed && "justify-center px-0"
-                                    )}
-                                >
-                                    <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground")} />
-                                    {(!isDesktop || !collapsed) && (
-                                        <span className="truncate">{item.name}</span>
-                                    )}
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        href={item.href}
+                                        className={cn(
+                                            "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary",
+                                            isActive
+                                                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary"
+                                                : "text-muted-foreground hover:text-foreground",
+                                            isDesktop && collapsed && "justify-center px-0"
+                                        )}
+                                    >
+                                        <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground")} />
+                                        {(!isDesktop || !collapsed) && (
+                                            <span className="truncate">{item.name}</span>
+                                        )}
 
-                                    {isActive && (!isDesktop || !collapsed) && (
-                                        <motion.div
-                                            layoutId="activeNav"
-                                            className="absolute left-0 w-1 h-8 rounded-r-full bg-primary"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                        />
-                                    )}
-                                </Link>
-                            );
-                        })}
+                                        {isActive && (!isDesktop || !collapsed) && (
+                                            <motion.div
+                                                layoutId="activeNav"
+                                                className="absolute left-0 w-1 h-8 rounded-r-full bg-primary"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                            />
+                                        )}
+                                    </Link>
+                                );
+                            })}
                     </div>
 
                     {/* User Profile */}

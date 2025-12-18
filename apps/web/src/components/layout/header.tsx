@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { useActiveOrganisation } from "@/context/ActiveOrganisationContext";
 import { organisationsApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 
 interface HeaderProps {
     onOpenSidebar: () => void;
@@ -14,15 +15,31 @@ interface HeaderProps {
 export function Header({ onOpenSidebar }: HeaderProps) {
     const { theme, setTheme } = useTheme();
     const { activeOrgId } = useActiveOrganisation();
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const userData = localStorage.getItem("user");
+            if (userData) {
+                const user = JSON.parse(userData);
+                setUserRole(user.role);
+            }
+        }
+    }, []);
 
     const { data: activeOrg } = useQuery({
-        queryKey: ["organisation", activeOrgId],
+        queryKey: ["organisation", activeOrgId, userRole],
         queryFn: async () => {
-            if (!activeOrgId) return null;
-            const res = await organisationsApi.get(activeOrgId);
-            return res.data;
+            // SUPER_ADMIN can get any org by ID, others use /current
+            if (userRole === 'SUPER_ADMIN' && activeOrgId) {
+                const res = await organisationsApi.get(activeOrgId);
+                return res.data;
+            } else {
+                const res = await organisationsApi.getCurrent();
+                return res.data;
+            }
         },
-        enabled: !!activeOrgId,
+        enabled: !!userRole,
     });
 
     return (
