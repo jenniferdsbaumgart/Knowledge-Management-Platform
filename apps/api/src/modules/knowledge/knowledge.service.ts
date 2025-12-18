@@ -7,13 +7,19 @@ import { DocumentStatus } from '@prisma/client';
 export class KnowledgeService {
     constructor(private prisma: PrismaService) { }
 
-    async findAll(query: DocumentQueryDto) {
+    async findAll(query: DocumentQueryDto, organisationId?: string) {
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 20;
         const skip = (page - 1) * limit;
         const { sourceId, status, search } = query;
 
         const where: any = {};
+
+        // Filter by organisation through source
+        if (organisationId) {
+            where.source = { organisationId };
+        }
+
         if (sourceId) where.sourceId = sourceId;
         if (status) where.status = status;
         if (search) {
@@ -46,9 +52,14 @@ export class KnowledgeService {
         };
     }
 
-    async findOne(id: string) {
-        const document = await this.prisma.document.findUnique({
-            where: { id },
+    async findOne(id: string, organisationId?: string) {
+        const where: any = { id };
+        if (organisationId) {
+            where.source = { organisationId };
+        }
+
+        const document = await this.prisma.document.findFirst({
+            where,
             include: {
                 source: { select: { id: true, name: true, type: true } },
                 chunks: {
@@ -65,7 +76,17 @@ export class KnowledgeService {
         return document;
     }
 
-    async create(dto: CreateDocumentDto) {
+    async create(dto: CreateDocumentDto, organisationId?: string) {
+        // Verify source belongs to organisation
+        if (organisationId) {
+            const source = await this.prisma.source.findFirst({
+                where: { id: dto.sourceId, organisationId },
+            });
+            if (!source) {
+                throw new NotFoundException('Source not found in your organisation');
+            }
+        }
+
         return this.prisma.document.create({
             data: {
                 sourceId: dto.sourceId,
@@ -77,8 +98,8 @@ export class KnowledgeService {
         });
     }
 
-    async update(id: string, dto: UpdateDocumentDto) {
-        await this.findOne(id); // Ensure exists
+    async update(id: string, dto: UpdateDocumentDto, organisationId?: string) {
+        await this.findOne(id, organisationId); // Ensure exists and belongs to org
 
         return this.prisma.document.update({
             where: { id },
@@ -91,24 +112,35 @@ export class KnowledgeService {
         });
     }
 
-    async remove(id: string) {
-        await this.findOne(id);
+    async remove(id: string, organisationId?: string) {
+        await this.findOne(id, organisationId);
 
         return this.prisma.document.delete({
             where: { id },
         });
     }
 
-    async getStats() {
+    async getStats(organisationId?: string) {
+        // Build where clause to filter by organisation through source relation
+        const documentWhere: any = {};
+        const chunkWhere: any = {};
+
+        if (organisationId) {
+            documentWhere.source = { organisationId };
+            chunkWhere.document = { source: { organisationId } };
+        }
+
         const [totalDocuments, totalChunks, byStatus, bySource] = await Promise.all([
-            this.prisma.document.count(),
-            this.prisma.chunk.count(),
+            this.prisma.document.count({ where: documentWhere }),
+            this.prisma.chunk.count({ where: chunkWhere }),
             this.prisma.document.groupBy({
                 by: ['status'],
+                where: documentWhere,
                 _count: true,
             }),
             this.prisma.document.groupBy({
                 by: ['sourceId'],
+                where: documentWhere,
                 _count: true,
             }),
         ]);
