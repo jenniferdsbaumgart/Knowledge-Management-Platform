@@ -353,12 +353,12 @@ function AddSourceForm({ onClose }: { onClose: () => void }) {
                                             key={index}
                                             className="flex items-center justify-between p-2.5 bg-card border rounded-lg text-sm shadow-sm group"
                                         >
-                                            <div className="flex items-center gap-3 truncate">
-                                                <div className="p-1.5 bg-primary/10 rounded">
+                                            <div className="flex items-center gap-3 w-0 flex-1">
+                                                <div className="p-1.5 bg-primary/10 rounded shrink-0">
                                                     <FileText className="w-4 h-4 text-primary" />
                                                 </div>
-                                                <div className="flex flex-col truncate">
-                                                    <span className="truncate font-medium">{file.name}</span>
+                                                <div className="flex flex-col min-w-0 w-full">
+                                                    <span className="truncate font-medium block" title={file.name}>{file.name}</span>
                                                     <span className="text-[10px] text-muted-foreground">
                                                         {(file.size / 1024).toFixed(1)} KB
                                                     </span>
