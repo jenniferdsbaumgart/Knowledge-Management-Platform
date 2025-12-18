@@ -57,7 +57,7 @@ export class CmsController {
     }
 
     @Post()
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Create new content' })
     async create(
         @CurrentUser('id') userId: string,
@@ -68,7 +68,7 @@ export class CmsController {
     }
 
     @Put(':id')
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Update content' })
     async update(
         @Param('id') id: string,
@@ -85,14 +85,14 @@ export class CmsController {
     }
 
     @Post(':id/publish')
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Publish content' })
     async publish(@Param('id') id: string) {
         return this.cmsService.publish(id);
     }
 
     @Post(':id/unpublish')
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Unpublish content' })
     async unpublish(@Param('id') id: string) {
         return this.cmsService.unpublish(id);

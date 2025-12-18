@@ -25,7 +25,7 @@ export class UploadController {
     constructor(private uploadService: UploadService) { }
 
     @Post(':sourceId')
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @UseInterceptors(FilesInterceptor('files', 20, {
         limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
         fileFilter: (_req, file, cb) => {
@@ -72,7 +72,7 @@ export class UploadController {
     }
 
     @Get(':sourceId')
-    @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'List files for a source' })
     async listFiles(@Param('sourceId') sourceId: string): Promise<{ files: string[] }> {
         const files = await this.uploadService.listFiles(sourceId);

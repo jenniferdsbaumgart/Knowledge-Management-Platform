@@ -30,7 +30,7 @@ export class AuthService {
 
         // Check if this is the first user (make them admin)
         const userCount = await this.prisma.user.count();
-        const role = userCount === 0 ? 'ADMIN' : (dto.role || 'VIEWER');
+        const role = userCount === 0 ? 'ADMIN' : (dto.role || 'CLIENT');
 
         // Get or create organisation
         let organisationId = dto.organisationId;

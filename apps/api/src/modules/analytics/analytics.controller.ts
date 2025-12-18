@@ -14,7 +14,7 @@ export class AnalyticsController {
     constructor(private analyticsService: AnalyticsService) { }
 
     @Get('dashboard')
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Get dashboard statistics' })
     async getDashboardStats(@Query('days') days?: number, @Request() req?: any) {
         return this.analyticsService.getDashboardStats(days || 30, req.organisationId);

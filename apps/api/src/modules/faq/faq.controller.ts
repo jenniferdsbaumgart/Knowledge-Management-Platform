@@ -63,7 +63,7 @@ export class FaqController {
 
     @Post()
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Create FAQ entry manually' })
     async create(@Body() dto: CreateFaqEntryDto, @Request() req: any) {
@@ -72,7 +72,7 @@ export class FaqController {
 
     @Put(':id')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Update FAQ entry' })
     async update(@Param('id') id: string, @Body() dto: UpdateFaqEntryDto) {
@@ -90,7 +90,7 @@ export class FaqController {
 
     @Post(':id/approve')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Approve draft FAQ entry' })
     async approve(@Param('id') id: string) {
@@ -126,7 +126,7 @@ export class FaqController {
 
     @Post('generate')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Generate FAQs from a source using AI' })
     async generate(@Body() dto: GenerateFaqDto, @Request() req: any) {
@@ -140,7 +140,7 @@ export class FaqController {
 
     @Post('generate-all')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Generate FAQs from all sources using AI' })
     async generateAll(@Body() body: { maxPerSource?: number }, @Request() req: any) {

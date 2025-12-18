@@ -38,28 +38,28 @@ export class SourcesController {
     }
 
     @Post()
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Create a new data source' })
     async create(@Body() dto: CreateSourceDto, @Request() req: any) {
         return this.sourcesService.create(dto, req.organisationId);
     }
 
     @Put(':id')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Update a data source' })
     async update(@Param('id') id: string, @Body() dto: UpdateSourceDto, @Request() req: any) {
         return this.sourcesService.update(id, dto, req.organisationId);
     }
 
     @Delete(':id')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Delete a data source' })
     async remove(@Param('id') id: string, @Request() req: any) {
         return this.sourcesService.remove(id, req.organisationId);
     }
 
     @Post(':id/test')
-    @Roles(UserRole.ADMIN)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Test connection to a data source' })
     async testConnection(@Param('id') id: string, @Request() req: any) {
         return this.sourcesService.testConnection(id, req.organisationId);

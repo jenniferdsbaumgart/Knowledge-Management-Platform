@@ -14,7 +14,7 @@ export class SyncController {
     constructor(private syncService: SyncService) { }
 
     @Post(':sourceId')
-    @Roles(UserRole.ADMIN, UserRole.EDITOR)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @ApiOperation({ summary: 'Trigger sync for a source' })
     async triggerSync(@Param('sourceId') sourceId: string, @Request() req: any) {
         return this.syncService.triggerSyncSecure(sourceId, req.organisationId);
