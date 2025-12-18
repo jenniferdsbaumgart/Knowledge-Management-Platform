@@ -20,6 +20,7 @@ import { SyncModule } from './modules/sync/sync.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { CmsModule } from './modules/cms/cms.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { SofiaWebhookModule } from './modules/sofia-webhook/sofia-webhook.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { FaqModule } from './modules/faq/faq.module';
 import { OrganisationsModule } from './modules/organisations/organisations.module';
@@ -59,6 +60,7 @@ import { UsersModule } from './modules/users/users.module';
         AnalyticsModule,
         CmsModule,
         WebhooksModule,
+        SofiaWebhookModule,
         UploadModule,
         FaqModule,
         OrganisationsModule,

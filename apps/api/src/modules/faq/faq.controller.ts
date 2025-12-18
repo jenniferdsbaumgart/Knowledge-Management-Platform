@@ -24,6 +24,7 @@ import {
     FaqQueryDto,
     GenerateFaqDto,
     FaqSearchDto,
+    SyncFaqDto,
 } from './dto/faq.dto';
 
 @ApiTags('FAQ')
@@ -149,6 +150,15 @@ export class FaqController {
             body.maxPerSource || 5,
         );
         return { generated: count, message: `Generated ${count} FAQ entries from all sources` };
+    }
+
+    @Post('sync-to-sofia')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Sync approved/draft/all FAQs to Sofia (N8N webhook)' })
+    async syncToSofia(@Body() dto: SyncFaqDto, @Request() req: any) {
+        return this.faqService.syncToSofia(req.organisationId, dto.filter);
     }
 
     @Get('export/json')

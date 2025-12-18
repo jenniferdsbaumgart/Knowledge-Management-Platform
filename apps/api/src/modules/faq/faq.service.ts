@@ -8,12 +8,14 @@ import {
     FaqQueryDto,
 } from './dto/faq.dto';
 import { FaqRagService } from './faq-rag.service';
+import { SofiaWebhookService } from '../sofia-webhook/sofia-webhook.service';
 
 @Injectable()
 export class FaqService {
     constructor(
         private prisma: PrismaService,
-        private ragService: FaqRagService
+        private ragService: FaqRagService,
+        private sofiaWebhookService: SofiaWebhookService,
     ) { }
 
     // ==================== FAQ ENTRIES ====================
@@ -184,5 +186,38 @@ export class FaqService {
             .replace(/\s+/g, '-')
             .replace(/-+/g, '-')
             .trim();
+    }
+
+    // ==================== SYNC TO SOFIA ====================
+
+    async syncToSofia(organisationId: string, filter: 'approved' | 'draft' | 'all' = 'approved') {
+        const where: any = { organisationId };
+
+        if (filter === 'approved') {
+            where.status = FaqStatus.APPROVED;
+        } else if (filter === 'draft') {
+            where.status = FaqStatus.DRAFT;
+        }
+
+        // Fetch FAQs based on filter
+        const faqs = await this.prisma.faqEntry.findMany({
+            where,
+        });
+
+        // Trigger Sofia webhook with all FAQ IDs
+        const result = await this.sofiaWebhookService.sendFaqsToSofia(
+            organisationId,
+            faqs.map(f => f.id),
+            'sync',
+        );
+
+        return {
+            synced: faqs.length,
+            filter,
+            queued: result.queued,
+            message: result.queued
+                ? `Synced ${faqs.length} FAQ entries (${filter}) to Sofia`
+                : result.reason || 'Webhook not configured',
+        };
     }
 }

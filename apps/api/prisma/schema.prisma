@@ -21,12 +21,20 @@ model Organisation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Sofia Webhook Configuration
+  sofiaWebhookUrl     String?  @map("sofia_webhook_url")
+  sofiaWebhookEnabled Boolean  @default(false) @map("sofia_webhook_enabled")
+  sofiaWebhookMethod  String   @default("POST") @map("sofia_webhook_method")
+  sofiaWebhookSecret  String?  @map("sofia_webhook_secret")
+  sofiaWebhookHeaders Json?    @map("sofia_webhook_headers")
+
   // Relations
-  users      User[]
-  sources    Source[]
+  users           User[]
+  sources         Source[]
   contents        Content[]
   faqEntries      FaqEntry[]
   analyticsEvents AnalyticsEvent[]
+  sofiaWebhookLogs SofiaWebhookLog[]
 
   @@map("organisations")
 }
@@ -276,4 +284,27 @@ model FaqEntry {
   @@index([categoryId])
   @@index([organisationId])
   @@map("faq_entries")
+}
+
+// ==================== SOFIA WEBHOOK LOGS ====================
+
+model SofiaWebhookLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String   @map("organisation_id") @db.Uuid
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  
+  method         String
+  url            String
+  payload        Json
+  status         Int?
+  response       Json?
+  error          String?
+  duration       Int?     // Response time in ms
+  attempt        Int      @default(1)
+  sentAt         DateTime @default(now()) @map("sent_at")
+  
+  @@index([organisationId])
+  @@index([sentAt])
+  @@index([status])
+  @@map("sofia_webhook_logs")
 }

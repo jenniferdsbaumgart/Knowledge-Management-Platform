@@ -7,9 +7,10 @@ import { FaqService } from './faq.service';
 import { FaqGeneratorService } from './faq-generator.service';
 import { FaqRagService } from './faq-rag.service';
 import { FaqExportService } from './faq-export.service';
+import { SofiaWebhookModule } from '../sofia-webhook/sofia-webhook.module';
 
 @Module({
-    imports: [ConfigModule],
+    imports: [ConfigModule, SofiaWebhookModule],
     controllers: [FaqController, FaqRagController, FaqExportController],
     providers: [FaqService, FaqGeneratorService, FaqRagService, FaqExportService],
     exports: [FaqService, FaqRagService, FaqExportService],

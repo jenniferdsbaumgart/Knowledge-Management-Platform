@@ -122,3 +122,14 @@ export class FaqSearchDto {
     @Max(20)
     limit?: number = 5;
 }
+
+export class SyncFaqDto {
+    @ApiProperty({
+        description: 'Filter for FAQs to sync',
+        enum: ['approved', 'draft', 'all'],
+        example: 'approved'
+    })
+    @IsString()
+    @IsEnum(['approved', 'draft', 'all'])
+    filter: 'approved' | 'draft' | 'all';
+}
