@@ -10,6 +10,8 @@ interface GeneratedFaq {
     category?: string;
 }
 
+import { FaqRagService } from './faq-rag.service';
+
 @Injectable()
 export class FaqGeneratorService {
     private client: OpenAI;
@@ -19,6 +21,7 @@ export class FaqGeneratorService {
     constructor(
         private prisma: PrismaService,
         private configService: ConfigService,
+        private faqRagService: FaqRagService,
     ) {
         // Check if we should use OpenRouter
         console.log('[FaqGenerator] USE_OPENROUTER env value:', process.env.USE_OPENROUTER);
@@ -82,7 +85,7 @@ export class FaqGeneratorService {
 
                 // Save FAQs
                 for (const faq of faqs) {
-                    await this.prisma.faqEntry.create({
+                    const entry = await this.prisma.faqEntry.create({
                         data: {
                             question: faq.question,
                             answer: faq.answer,
@@ -93,6 +96,9 @@ export class FaqGeneratorService {
                         },
                     });
                     totalGenerated++;
+
+                    // Index FAQ for RAG immediately
+                    await this.faqRagService.indexFaq(entry.id);
                 }
             } catch (error) {
                 console.error(`[FaqGenerator] Error generating FAQs for document ${doc.id}:`, error);
