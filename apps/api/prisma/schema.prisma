@@ -36,8 +36,7 @@ model Organisation {
 enum UserRole {
   SUPER_ADMIN
   ADMIN
-  EDITOR
-  VIEWER
+  CLIENT
 }
 
 model User {
@@ -45,7 +44,7 @@ model User {
   email          String    @unique
   password       String
   name           String
-  role           UserRole  @default(VIEWER)
+  role           UserRole  @default(CLIENT)
   organisationId String    @map("organisation_id") @db.Uuid
   refreshToken   String?
   createdAt      DateTime  @default(now()) @map("created_at")
