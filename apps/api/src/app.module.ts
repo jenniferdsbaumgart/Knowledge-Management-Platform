@@ -23,6 +23,7 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { FaqModule } from './modules/faq/faq.module';
 import { OrganisationsModule } from './modules/organisations/organisations.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
     imports: [
@@ -61,6 +62,7 @@ import { OrganisationsModule } from './modules/organisations/organisations.modul
         UploadModule,
         FaqModule,
         OrganisationsModule,
+        UsersModule,
     ],
 })
 export class AppModule { }
