@@ -20,6 +20,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -31,6 +40,10 @@ import {
     Edit,
     HelpCircle,
     Bot,
+    Search,
+    MoreHorizontal,
+    FileJson,
+    PlusCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -56,6 +69,7 @@ const statusConfig = {
 export default function FaqPage() {
     const queryClient = useQueryClient();
     const [statusFilter, setStatusFilter] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState("");
     const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [selectedSource, setSelectedSource] = useState<string>("");
@@ -138,8 +152,20 @@ export default function FaqPage() {
     const [showJsonExport, setShowJsonExport] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    const faqs: FaqEntry[] = faqData?.data?.items || [];
-    const sources = sourcesData?.data?.items || [];
+    // Data handling with safe checks
+    const rawFaqs = faqData?.data || faqData || [];
+    const faqs = (Array.isArray(rawFaqs) ? rawFaqs : rawFaqs.items || []) as FaqEntry[];
+
+    const rawSources = sourcesData?.data || sourcesData || [];
+    const sources = (Array.isArray(rawSources) ? rawSources : rawSources.items || []) as any[];
+
+    // Client-side filtering
+    const filteredFaqs = faqs.filter((faq) =>
+        searchQuery ? (
+            faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+        ) : true
+    );
 
     const jsonExport = JSON.stringify(
         faqs.map((f) => ({
@@ -166,11 +192,20 @@ export default function FaqPage() {
             />
 
             {/* Actions Bar */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="relative w-full md:w-[250px]">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search questions..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-8"
+                        />
+                    </div>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Filter by status" />
+                        <SelectTrigger className="w-[140px]">
+                            <SelectValue placeholder="Status" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Status</SelectItem>
@@ -181,7 +216,7 @@ export default function FaqPage() {
                     </Select>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     <Dialog open={generateDialogOpen} onOpenChange={setGenerateDialogOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline">
@@ -195,13 +230,20 @@ export default function FaqPage() {
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                                 <p className="text-sm text-muted-foreground">
-                                    Select a source to generate FAQ entries from its indexed content.
+                                    Choose a specific source or generate from all available content.
                                 </p>
-                                <Select value={selectedSource} onValueChange={setSelectedSource}>
+                                <Select
+                                    value={selectedSource}
+                                    onValueChange={setSelectedSource}
+                                >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a source" />
+                                        <SelectValue placeholder="Select scope..." />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="ALL_SOURCES" className="font-semibold">
+                                            ✨ All Sources
+                                        </SelectItem>
+                                        <DropdownMenuSeparator />
                                         {sources.map((source: any) => (
                                             <SelectItem key={source.id} value={source.id}>
                                                 {source.name}
@@ -210,46 +252,52 @@ export default function FaqPage() {
                                     </SelectContent>
                                 </Select>
                                 <Button
-                                    onClick={() => selectedSource && generateMutation.mutate(selectedSource)}
-                                    disabled={!selectedSource || generateMutation.isPending}
+                                    onClick={() => {
+                                        if (selectedSource === "ALL_SOURCES") {
+                                            generateAllMutation.mutate();
+                                        } else if (selectedSource) {
+                                            generateMutation.mutate(selectedSource);
+                                        }
+                                    }}
+                                    disabled={!selectedSource || generateMutation.isPending || generateAllMutation.isPending}
                                     className="w-full"
                                 >
-                                    {generateMutation.isPending ? "Generating..." : "Generate FAQs"}
+                                    {(generateMutation.isPending || generateAllMutation.isPending)
+                                        ? "Generating..."
+                                        : "Start Generation"}
                                 </Button>
                             </div>
                         </DialogContent>
                     </Dialog>
 
-                    <Button
-                        variant="outline"
-                        onClick={() => generateAllMutation.mutate()}
-                        disabled={generateAllMutation.isPending}
-                    >
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {generateAllMutation.isPending ? "Generating..." : "Generate All"}
-                    </Button>
-
                     <Link href="/settings/sofia">
-                        <Button variant="outline">
+                        <Button>
                             <Bot className="mr-2 h-4 w-4" />
                             Sofia Sync
                         </Button>
                     </Link>
 
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowJsonExport(!showJsonExport)}
-                    >
-                        Export JSON
-                    </Button>
-
-                    <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add FAQ
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
                             </Button>
-                        </DialogTrigger>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => setAddDialogOpen(true)}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Manually
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setShowJsonExport(!showJsonExport)}>
+                                <FileJson className="mr-2 h-4 w-4" />
+                                Export JSON
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Hidden Dialog Trigger for Add MCQ used elsewhere? No, state driven */}
+                    <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Add FAQ Manually</DialogTitle>
@@ -382,7 +430,7 @@ export default function FaqPage() {
                 </Card>
             ) : (
                 <div className="space-y-4">
-                    {faqs.map((faq, index) => (
+                    {filteredFaqs.map((faq, index) => (
                         <motion.div
                             key={faq.id}
                             initial={{ opacity: 0, y: 10 }}
