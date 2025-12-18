@@ -174,3 +174,18 @@ export const usersApi = {
         api.put(`/users/${id}`, data),
     delete: (id: string) => api.delete(`/users/${id}`),
 };
+
+// Sofia Webhook API
+export const sofiaApi = {
+    getConfig: () => api.get('/organisations/current/sofia-webhook'),
+    updateConfig: (data: {
+        sofiaWebhookUrl: string;
+        sofiaWebhookEnabled: boolean;
+        sofiaWebhookMethod?: string;
+        sofiaWebhookSecret?: string;
+        sofiaWebhookHeaders?: Record<string, string>;
+    }) => api.put('/organisations/current/sofia-webhook', data),
+    test: () => api.post('/organisations/current/sofia-webhook/test'),
+    logs: () => api.get('/organisations/current/sofia-webhook/logs'),
+    syncFaqs: (filter: 'approved' | 'draft' | 'all') => api.post('/faq/sync-to-sofia', { filter }),
+};

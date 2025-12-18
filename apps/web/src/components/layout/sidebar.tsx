@@ -16,6 +16,7 @@ import {
     LogOut,
     HelpCircle,
     Users,
+    Bot,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,6 +29,7 @@ const navigation = [
     { name: "Chat", href: "/faq/chat", icon: Search },
     { name: "Sources", href: "/sources", icon: Database },
     { name: "FAQ", href: "/faq", icon: HelpCircle },
+    { name: "Sofia", href: "/settings/sofia", icon: Bot, adminOnly: true },
     { name: "Users", href: "/users", icon: Users, adminOnly: true },
     { name: "Content", href: "/content", icon: FileText },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },

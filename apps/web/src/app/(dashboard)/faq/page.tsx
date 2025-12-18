@@ -30,8 +30,11 @@ import {
     Trash2,
     Edit,
     HelpCircle,
+    Bot,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import Link from "next/link";
+
 
 interface FaqEntry {
     id: string;
@@ -225,6 +228,13 @@ export default function FaqPage() {
                         <Sparkles className="mr-2 h-4 w-4" />
                         {generateAllMutation.isPending ? "Generating..." : "Generate All"}
                     </Button>
+
+                    <Link href="/settings/sofia">
+                        <Button variant="outline">
+                            <Bot className="mr-2 h-4 w-4" />
+                            Sofia Sync
+                        </Button>
+                    </Link>
 
                     <Button
                         variant="outline"
@@ -458,6 +468,8 @@ export default function FaqPage() {
                     ))}
                 </div>
             )}
+
+
         </div>
     );
 }
